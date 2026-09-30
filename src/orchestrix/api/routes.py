@@ -35,8 +35,22 @@ async def invoke_scoping_agent(request: PlanGenerationRequest) -> PlanGeneration
 
     Body: PlanGenerationRequest (brief + flags)
     Returns: Plan + métadonnées de génération
+
+    Le ScopingAgent est importé paresseusement afin que les tests unitaires
+    de l'API ne chargent pas langchain/langgraph (imports lourds).
     """
-    raise HTTPException(status_code=501, detail="Scoping Agent : à implémenter (Lot A)")
+    try:
+        from orchestrix.agents.scoping.agent import ScopingAgent  # import lourd, paresseux
+    except Exception as exc:  # dépendances Lot A absentes (ex: langchain non installé)
+        raise HTTPException(status_code=503, detail=f"Scoping Agent indisponible : {exc}") from exc
+
+    agent = ScopingAgent()
+    try:
+        return await agent.generate_plan(request)
+    except NotImplementedError as exc:
+        raise HTTPException(
+            status_code=501, detail=f"Scoping Agent : à implémenter (Lot A) — {exc}"
+        ) from exc
 
 
 # ════════════════════════════════════════════════════════════════════

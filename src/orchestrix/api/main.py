@@ -18,6 +18,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from orchestrix.api.routes import audit_router, ops_router, risk_router, scoping_router
 from orchestrix.config import get_settings
 from orchestrix.observability.tracing import setup_tracing
 
@@ -50,9 +51,8 @@ async def health() -> dict:
     return {"status": "ok", "version": "0.1.0"}
 
 
-# TODO: monter les routers par domaine
-# from orchestrix.api.routes import scoping, ops, risk, audit
-# app.include_router(scoping.router, prefix="/agent", tags=["Scoping Agent"])
-# app.include_router(ops.router, prefix="/ops", tags=["Ops Agent + ActionGuard"])
-# app.include_router(risk.router, prefix="/risk", tags=["Risk Agent"])
-# app.include_router(audit.router, prefix="/audit", tags=["Audit"])
+# Routers par domaine — le contrat Lot A / Lot B est décrit dans routes.py
+app.include_router(scoping_router, prefix="/agent", tags=["Scoping Agent (Lot A)"])
+app.include_router(ops_router, prefix="/ops", tags=["Ops Agent + ActionGuard (Lot B)"])
+app.include_router(risk_router, prefix="/risk", tags=["Risk Agent (Lot A)"])
+app.include_router(audit_router, prefix="/audit", tags=["Audit (Lot B)"])

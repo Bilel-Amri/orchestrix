@@ -119,5 +119,5 @@ Checklist :
 - [ ] ARCHITECTURE.md à jour
 - [ ] Plan d'évaluation exécutable d'un seul coup
 - [ ] Dashboard Streamlit fonctionnel
-- [ ] Demo Jira Cloud Free configuré et nettoyé
+- [ ] Demo Jira Cloud Free configuré et nettoyé (guide : docs/jira_demo_setup.md, seed : `python scripts/seed_jira_demo.py`)
 - [ ] MLflow UI accessible et présentable

@@ -1,0 +1,21 @@
+# Normalize line endings across OSes (Windows/macOS/Linux)
+* text=auto eol=lf
+
+# Windows-only files that genuinely need CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets — never touch
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.parquet binary
+*.pkl binary
+*.joblib binary
+*.pt binary
+*.onnx binary

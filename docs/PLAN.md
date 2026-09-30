@@ -20,13 +20,13 @@
 - [x] Configuration (.env.example, settings)
 - [x] Schemas Pydantic (interfaces stables)
 - [ ] Datasets : pull JOSSE / Itemlet / Public Jira (Lot A)
-- [ ] Jira Cloud Free : créer le projet démo (Lot B)
+- [x] Jira Cloud Free : créer le projet démo (Lot B) — guide : `docs/jira_demo_setup.md`, seed : `scripts/seed_jira_demo.py` (projet SCRUM seedé, 12 issues)
 
 ### Semaine 2 — Scoping v1 (Lot A) + Ops skeleton (Lot B)
 - [ ] Scoping Agent v1 : SLM de base + prompt structuré (sans RAG) (Lot A)
 - [ ] JSON parsing + Pydantic validation + retry (Lot A)
-- [ ] FastAPI endpoint `/agent/invoke` (Lot B)
-- [ ] JiraMockExecutor + tests (Lot B)
+- [x] FastAPI endpoint `/agent/invoke` (Lot B) — contract 501/503 en attendant le Lot A, routers montés
+- [x] JiraMockExecutor + tests (Lot B) — parité d'interface JiraClient, clés monotones, JQL-lite
 
 ### Semaine 3 — RAG + Ops Agent
 - [ ] Hybrid retrieval (pgvector + BM25 + filtres source/type) (Lot A)

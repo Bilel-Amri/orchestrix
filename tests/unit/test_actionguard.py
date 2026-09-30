@@ -51,6 +51,64 @@ class TestJiraMockExecutor:
         except Exception as e:
             pytest.fail(f"Mock should not require credentials, got: {e}")
 
+    def test_keys_monotonic_per_project_and_no_reuse_after_delete(self):
+        """Clés monotones par projet — un delete ne réutilise jamais une clé."""
+        mock = JiraMockExecutor()
+        a1 = mock.create_issue("AAA", "a1", "d")["key"]
+        b1 = mock.create_issue("BBB", "b1", "d")["key"]
+        a2 = mock.create_issue("AAA", "a2", "d")["key"]
+        assert (a1, a2, b1) == ("AAA-1", "AAA-2", "BBB-1")
+        mock.delete_issue(a2)
+        a3 = mock.create_issue("AAA", "a3", "d")["key"]
+        assert a3 == "AAA-3"  # AAA-2 n'est pas recyclée
+
+    def test_transition_and_get_issue_roundtrip(self):
+        mock = JiraMockExecutor()
+        key = mock.create_issue("DEMO", "T", "Desc")["key"]
+        mock.transition_issue(key, "In Progress")
+        fields = mock.get_issue(key)["fields"]
+        assert fields["status"]["name"] == "In Progress"
+
+    def test_add_comment_appends(self):
+        mock = JiraMockExecutor()
+        key = mock.create_issue("DEMO", "T", "Desc")["key"]
+        mock.add_comment(key, "première")
+        mock.add_comment(key, "deuxième")
+        state = mock.get_state_snapshot()[key]
+        assert [c["body"] for c in state["comments"]] == ["première", "deuxième"]
+
+    def test_get_issue_shape_with_epic_and_labels(self):
+        mock = JiraMockExecutor()
+        epic = mock.create_epic("DEMO", "E1", "Epic desc", labels=["plan"])
+        task = mock.create_issue("DEMO", "T1", "Task desc", epic_key=epic["key"], labels=["plan"])
+        fields = mock.get_issue(task["key"])["fields"]
+        assert fields["parent"] == {"key": epic["key"]}
+        assert fields["labels"] == ["plan"]
+        assert fields["issuetype"]["name"] == "Epic" or fields["issuetype"]["name"] == "Task"
+
+    def test_search_issues_filters_by_project_and_label(self):
+        mock = JiraMockExecutor()
+        mock.create_issue("DEMO", "in", "d", labels=["plan"])
+        mock.create_issue("OTHER", "out", "d", labels=["plan"])
+        mock.create_issue("DEMO", "nolabel", "d", labels=[])
+        res = mock.search_issues('project = DEMO AND labels = "plan"')
+        keys = [r["key"] for r in res]
+        assert len(keys) == 1
+        assert mock.get_issue(keys[0])["fields"]["summary"] == "in"
+
+    def test_unknown_issue_raises_keyerror(self):
+        mock = JiraMockExecutor()
+        with pytest.raises(KeyError):
+            mock.get_issue("DEMO-999")
+        with pytest.raises(KeyError):
+            mock.transition_issue("NOPE-1", "Done")
+
+    def test_create_sprint_ids_unique(self):
+        mock = JiraMockExecutor()
+        s1 = mock.create_sprint(1, "Sprint 1")
+        s2 = mock.create_sprint(1, "Sprint 2")
+        assert s1["id"] != s2["id"]
+
 
 @pytest.mark.skip(reason="ActionGuard.evaluate() not implemented yet")
 class TestActionGuardSafeActions:
