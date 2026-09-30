@@ -2,7 +2,7 @@
 
 > Copilote multi-agent pour le cadrage, la planification, l'exécution contrôlée et la détection des risques des projets logiciels.
 >
-> *AI/MLOps/LLMOps PFE — Tek-Up University · AI & Data Science Engineering*
+> *AI/MLOps/LLMOps — Tek-Up University · AI & Data Science Engineering*
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
