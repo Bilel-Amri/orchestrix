@@ -149,8 +149,8 @@ orchestrix/
 
 | Lot | Personne | Périmètre | Branches Git |
 |---|---|---|---|
-| **A — Modélisation IA** | Bilel Amri | `agents/scoping/`, `agents/risk/`, `services/effort/`, `services/priority/`, `rag/` | `lot-a/*` |
-| **B — Systèmes & Fiabilité** | Mohamed Amine Gotai | `agents/ops/`, `reliability/`, `integrations/jira/`, `observability/`, `api/` | `lot-b/*` |
+| **A — Modélisation IA** | Mohamed Amine Gotai | `agents/scoping/`, `agents/risk/`, `services/effort/`, `services/priority/`, `rag/` | `lot-a/*` |
+| **B — Systèmes & Fiabilité** | Bilel Amri | `agents/ops/`, `reliability/`, `integrations/jira/`, `observability/`, `api/` | `lot-b/*` |
 | **Commun** | Tous les deux | `schemas/`, `db/`, `evaluation/`, `mlflow/`, `docs/` | PR avec 2 reviewers |
 
 **Règle d'or** : on ne touche JAMAIS aux fichiers de l'autre lot sans PR review.
