@@ -6,6 +6,7 @@ Compare LogReg / RF / XGBoost / TabTransformer (cf. section 8.1).
 ⚠️ Itemlet est utilisé UNIQUEMENT pour priorisation et complexité.
    Pour l'effort, c'est JOSSE exclusivement.
 """
+
 from orchestrix.services.priority.estimator import PriorityComplexityEstimator
 
 __all__ = ["PriorityComplexityEstimator"]

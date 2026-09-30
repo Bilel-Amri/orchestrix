@@ -1,4 +1,5 @@
 """Priority / Complexity Estimator — squelette (Lot A)."""
+
 from __future__ import annotations
 
 import logging

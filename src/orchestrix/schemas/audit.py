@@ -1,4 +1,5 @@
 """Schemas pour le journal d'audit (Lot B — append-only PostgreSQL)."""
+
 from __future__ import annotations
 
 from datetime import datetime

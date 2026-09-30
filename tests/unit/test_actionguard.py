@@ -6,6 +6,7 @@ Quand ActionGuard.evaluate() sera implémenté :
   - test que les ambiguous_actions déclenchent verdict=review
   - test que le dry-run mode ne touche jamais la vraie API Jira
 """
+
 import pytest
 
 from orchestrix.integrations.jira.mock import JiraMockExecutor

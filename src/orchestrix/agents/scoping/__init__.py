@@ -8,6 +8,7 @@ en langage naturel. Utilise LangGraph pour orchestrer :
   4. Annotation par les services ML (Effort + Priority)
   5. Retour du Plan validé
 """
+
 from orchestrix.agents.scoping.agent import ScopingAgent
 
 __all__ = ["ScopingAgent"]

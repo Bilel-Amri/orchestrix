@@ -20,6 +20,7 @@ SPLITS SANS FUITE (section 9 de la proposition) :
     2. Projets tenus à l'écart : projets A–N → projet O (jamais vu)
     3. Combinaisons inédites (exploratoire)
 """
+
 from __future__ import annotations
 
 import logging

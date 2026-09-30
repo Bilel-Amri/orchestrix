@@ -3,14 +3,15 @@
 Permet de basculer entre Ollama / vLLM / OpenAI-compatible sans toucher
 au code des agents. Chaque appel est tracé dans Langfuse (si configuré).
 """
+
 from __future__ import annotations
 
 import logging
 from typing import Any
 
 from langchain_core.messages import BaseMessage
-from langchain_openai import ChatOpenAI
 from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
 
 from orchestrix.config import get_settings
 

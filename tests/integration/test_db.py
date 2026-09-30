@@ -3,6 +3,7 @@
 ⚠️ Requiert PostgreSQL + pgvector en marche :
    docker compose -f docker/docker-compose.yml up postgres -d
 """
+
 import pytest
 
 

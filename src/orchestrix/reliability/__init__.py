@@ -8,6 +8,7 @@ avant exécution. Le gateway combine :
 Pour le benchmark safe/unsafe, l'environnement est dry-run : un mock executor
 simule Jira sur un état synthétique en mémoire.
 """
+
 from orchestrix.reliability.gateway import ActionGuard
 
 __all__ = ["ActionGuard"]

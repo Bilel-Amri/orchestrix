@@ -3,22 +3,23 @@
 ⚠️ Toute modification de ces schemas est un BREAKING CHANGE.
    Coordonner avec l'autre lot avant modification.
 """
+
+from orchestrix.schemas.audit import AuditLogEntry
+from orchestrix.schemas.decision import (
+    ActionDecision,
+    ActionProposal,
+    DecisionVerdict,
+)
 from orchestrix.schemas.plan import (
     EffortEstimate,
-    PriorityComplexity,
-    Task,
     Epic,
     Plan,
     PlanGenerationRequest,
     PlanGenerationResponse,
+    PriorityComplexity,
+    Task,
 )
-from orchestrix.schemas.decision import (
-    ActionProposal,
-    ActionDecision,
-    DecisionVerdict,
-)
-from orchestrix.schemas.audit import AuditLogEntry
-from orchestrix.schemas.risk import RiskScore, RiskAlert
+from orchestrix.schemas.risk import RiskAlert, RiskScore
 
 __all__ = [
     "EffortEstimate",

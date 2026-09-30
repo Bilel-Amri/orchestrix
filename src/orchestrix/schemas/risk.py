@@ -1,4 +1,5 @@
 """Schemas pour le Risk Agent (Lot A — surveillance continue)."""
+
 from __future__ import annotations
 
 from datetime import datetime

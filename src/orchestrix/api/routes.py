@@ -8,6 +8,7 @@ L'API est le CONTRAT entre le Lot A et le Lot B :
   - Le Lot B ne touche QUE les routes /ops/*, /audit/*
   - Le Risk Agent (Lot A) gère /risk/*
 """
+
 from __future__ import annotations
 
 import logging
@@ -16,8 +17,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException
 
 from orchestrix.schemas.audit import AuditLogEntry
-from orchestrix.schemas.decision import ActionDecision, ActionProposal
-from orchestrix.schemas.plan import Plan, PlanGenerationRequest, PlanGenerationResponse
+from orchestrix.schemas.plan import PlanGenerationRequest, PlanGenerationResponse
 from orchestrix.schemas.risk import RiskAlert, RiskScore
 
 logger = logging.getLogger(__name__)
@@ -52,7 +52,9 @@ async def execute_plan(plan_id: UUID) -> dict:
 
 
 @ops_router.post("/review/{decision_id}")
-async def submit_review(decision_id: UUID, approved: bool, reviewer_id: str, reason: str = "") -> dict:
+async def submit_review(
+    decision_id: UUID, approved: bool, reviewer_id: str, reason: str = ""
+) -> dict:
     """Soumet une revue humaine sur une décision ActionGuard en attente."""
     raise HTTPException(status_code=501, detail="À implémenter (Lot B)")
 

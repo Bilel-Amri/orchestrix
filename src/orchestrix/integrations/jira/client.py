@@ -11,6 +11,7 @@ Limites Jira Free à respecter :
 
 C'est pourquoi le RBAC et le journal d'audit sont implémentés côté applicatif.
 """
+
 from __future__ import annotations
 
 import logging
@@ -30,8 +31,7 @@ class JiraClient:
         settings = get_settings()
         if not settings.jira_base_url or not settings.jira_api_token:
             raise ValueError(
-                "Jira credentials missing — set JIRA_BASE_URL, JIRA_EMAIL, "
-                "JIRA_API_TOKEN in .env"
+                "Jira credentials missing — set JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN in .env"
             )
         self._client = Jira(
             url=settings.jira_base_url,

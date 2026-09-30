@@ -4,6 +4,7 @@
 
 En environnement de benchmark (dry-run), c'est JiraMockExecutor qui est utilisé.
 """
+
 from orchestrix.integrations.jira.client import JiraClient
 from orchestrix.integrations.jira.mock import JiraMockExecutor
 

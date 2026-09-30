@@ -6,6 +6,7 @@
 Le mock partage l'interface de JiraClient mais opère sur un état
 synthétique en mémoire (Dict[issue_key, issue_state]).
 """
+
 from __future__ import annotations
 
 import logging
@@ -46,9 +47,7 @@ class JiraMockExecutor:
         )
         return {"key": issue_key, "id": issue_key}
 
-    def create_issue(
-        self, project_key: str, summary: str, description: str, **kwargs
-    ) -> dict:
+    def create_issue(self, project_key: str, summary: str, description: str, **kwargs) -> dict:
         issue_key = f"{project_key}-{len(self._issues) + 1}"
         self._issues[issue_key] = MockIssueState(
             issue_key=issue_key,

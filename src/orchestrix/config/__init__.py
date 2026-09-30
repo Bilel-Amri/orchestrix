@@ -1,7 +1,7 @@
 """ORCHESTRIX — Configuration chargée depuis .env."""
+
 from functools import lru_cache
 
-from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -32,9 +32,7 @@ class Settings(BaseSettings):
     postgres_db: str = "orchestrix"
     postgres_user: str = "orchestrix"
     postgres_password: str = "orchestrix_dev"
-    database_url: str = (
-        "postgresql+asyncpg://orchestrix:orchestrix_dev@localhost:5432/orchestrix"
-    )
+    database_url: str = "postgresql+asyncpg://orchestrix:orchestrix_dev@localhost:5432/orchestrix"
 
     # ── Redis ──────────────────────────────────────────────────────
     redis_host: str = "localhost"

@@ -4,6 +4,7 @@ Usage :
   python -m orchestrix.evaluation.cli run --benchmark data/benchmarks/safe_unsafe_v1.json
   python -m orchestrix.evaluation.cli compare --current ... --baseline ...
 """
+
 from __future__ import annotations
 
 import json

@@ -10,6 +10,7 @@ Endpoints :
   GET  /audit/recent                 - Dernières entrées du journal d'audit
   GET  /health                       - Healthcheck
 """
+
 from __future__ import annotations
 
 import logging

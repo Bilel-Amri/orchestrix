@@ -1,4 +1,5 @@
 """Pytest configuration + fixtures partagés."""
+
 from __future__ import annotations
 
 import os
@@ -20,6 +21,7 @@ def _test_env() -> None:
 @pytest_asyncio.fixture
 async def async_db_session() -> AsyncGenerator:
     """Async DB session pour tests d'intégration."""
+    from sqlalchemy import text
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
     from orchestrix.db import Base
@@ -32,10 +34,12 @@ async def async_db_session() -> AsyncGenerator:
     )
 
     async with engine.begin() as conn:
+        # pgvector ne crée pas l'extension automatiquement (cf. scripts/init_db.py)
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.create_all)
 
-    Session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    async with Session() as session:
+    session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async with session_factory() as session:
         yield session
 
     async with engine.begin() as conn:
@@ -56,7 +60,6 @@ def sample_brief() -> str:
 @pytest.fixture
 def sample_benchmark(tmp_path):
     """Charge le benchmark template dans un fichier tmp."""
-    import json
     import shutil
     from pathlib import Path
 

@@ -25,6 +25,7 @@ ABLATION A→E (section 8.3 de la proposition) :
 
     Chaque condition doit être testable séparément via --ablation-condition.
 """
+
 from __future__ import annotations
 
 import logging
@@ -32,7 +33,7 @@ from typing import Literal
 
 from orchestrix.agents._llm_client import LLMClient
 from orchestrix.agents.scoping.prompts import build_scoping_prompt
-from orchestrix.schemas.plan import Plan, PlanGenerationRequest, PlanGenerationResponse
+from orchestrix.schemas.plan import PlanGenerationRequest, PlanGenerationResponse
 
 logger = logging.getLogger(__name__)
 

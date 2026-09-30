@@ -7,6 +7,7 @@
 
 Toutes les versions partagent le même schéma JSON de sortie imposé.
 """
+
 from __future__ import annotations
 
 import json
@@ -78,10 +79,7 @@ def _build_system_prompt(condition: str) -> str:
     """Le system prompt varie selon la condition d'ablation."""
     if condition == "A":
         # Baseline — pas de schéma imposé
-        return (
-            "Tu es un assistant de gestion de projet. "
-            "Décris le projet en tâches structurées."
-        )
+        return "Tu es un assistant de gestion de projet. Décris le projet en tâches structurées."
 
     # B, C, D, E — schéma JSON imposé
     base = (
@@ -113,7 +111,6 @@ def _build_human_prompt(
             parts.append(f"\n[{i}] {ev}")
 
     parts.append(
-        "\n\nProduis maintenant le plan JSON conforme au schéma. "
-        "N'inclus aucun texte hors du JSON."
+        "\n\nProduis maintenant le plan JSON conforme au schéma. N'inclus aucun texte hors du JSON."
     )
     return "\n".join(parts)

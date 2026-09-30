@@ -6,6 +6,7 @@ Combine :
   3. Filtres metadata (source ∈ {josse, itemlet, public_jira, policy})
   4. Reranking optionnel (cross-encoder/ms-marco-MiniLM-L-6-v2)
 """
+
 from __future__ import annotations
 
 import logging
@@ -45,9 +46,7 @@ def retrieve_evidence(
     Returns:
         Liste de RetrievedChunk triés par score décroissant
     """
-    raise NotImplementedError(
-        "retrieve_evidence : voir README pour le pipeline à implémenter."
-    )
+    raise NotImplementedError("retrieve_evidence : voir README pour le pipeline à implémenter.")
 
 
 def embed_query(query: str) -> list[float]:

@@ -11,6 +11,7 @@ Pages à implémenter :
 Lancer avec :
   streamlit run src/orchestrix/dashboard/app.py
 """
+
 import streamlit as st
 
 st.set_page_config(

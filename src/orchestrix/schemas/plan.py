@@ -1,4 +1,5 @@
 """Schemas liés à la génération de plans (Lot A — Scoping Agent output)."""
+
 from __future__ import annotations
 
 from datetime import datetime

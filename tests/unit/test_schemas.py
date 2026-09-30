@@ -1,4 +1,5 @@
 """Tests unitaires des schemas Pydantic (interfaces stables)."""
+
 import pytest
 from pydantic import ValidationError
 
@@ -101,13 +102,21 @@ class TestPlan:
         p = Plan(
             brief="x" * 25,
             epics=[
-                {"title": "Epic 1", "description": "d", "tasks": [
-                    {"title": "T1", "description": "d"},
-                    {"title": "T2", "description": "d"},
-                ]},
-                {"title": "Epic 2", "description": "d", "tasks": [
-                    {"title": "T3", "description": "d"},
-                ]},
+                {
+                    "title": "Epic 1",
+                    "description": "First epic description",
+                    "tasks": [
+                        {"title": "Task 1", "description": "First task description"},
+                        {"title": "Task 2", "description": "Second task description"},
+                    ],
+                },
+                {
+                    "title": "Epic 2",
+                    "description": "Second epic description",
+                    "tasks": [
+                        {"title": "Task 3", "description": "Third task description"},
+                    ],
+                },
             ],
         )
         assert len(p.all_tasks) == 3

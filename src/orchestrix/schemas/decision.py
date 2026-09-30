@@ -1,4 +1,5 @@
 """Schemas liés aux décisions ActionGuard (Lot B — Reliability Gateway)."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -6,7 +7,6 @@ from typing import Literal
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
-
 
 DecisionVerdict = Literal["allow", "review", "block"]
 
@@ -54,9 +54,7 @@ class ActionDecision(BaseModel):
 
     verdict: DecisionVerdict
     reason: str = Field(..., description="Justification de la décision (auditable)")
-    rule_applied: str = Field(
-        ..., description="Identifiant de la règle ActionGuard déclenchée"
-    )
+    rule_applied: str = Field(..., description="Identifiant de la règle ActionGuard déclenchée")
 
     # Si verdict=review, indique qui doit reviewer
     human_reviewer_required: bool = False

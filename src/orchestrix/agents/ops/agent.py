@@ -16,6 +16,7 @@ INTERFACES DISPONIBLES :
 
 ⚠️ AUCUNE action ne doit être exécutée sans être passée par ActionGuard.
 """
+
 from __future__ import annotations
 
 import logging
