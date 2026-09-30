@@ -6,8 +6,8 @@
 
 | Lot | Semaines | Livrables principaux |
 |---|---|---|
-| **Lot A — Bilel** | 1–8 | Scoping Agent, Effort + Priority Estimators, Risk Agent, RAG pipeline |
-| **Lot B — Mohamed Amine** | 1–8 | Ops Agent, ActionGuard, Jira integration, FastAPI, observability |
+| **Lot A — Mohamed Amine** | 1–8 | Scoping Agent, Effort + Priority Estimators, Risk Agent, RAG pipeline |
+| **Lot B — Bilel** | 1–8 | Ops Agent, ActionGuard, Jira integration, FastAPI, observability |
 | **Commun** | 1–8 | DB schemas, evaluation harness, MLflow tracking, dashboard |
 
 ## Semaine par semaine
