@@ -1,6 +1,6 @@
 # Guide de contribution — ORCHESTRIX
 
-> Conventions pour Bilel Amri (Lot A) et Mohamed Amine Gotai (Lot B).
+> Conventions pour Mohamed Amine Gotai (Lot A) et Bilel Amri (Lot B).
 
 ## Git workflow
 
@@ -8,8 +8,8 @@
 
 | Préfixe | Utilisé par | Description |
 |---|---|---|
-| `lot-a/*` | Bilel | Scoping, Risk, Effort, Priority, RAG |
-| `lot-b/*` | Mohamed Amine | Ops, ActionGuard, Jira, FastAPI, observabilité |
+| `lot-a/*` | Mohamed Amine | Scoping, Risk, Effort, Priority, RAG |
+| `lot-b/*` | Bilel | Ops, ActionGuard, Jira, FastAPI, observabilité |
 | `feature/*` | Tous | Features communes (schemas, db, evaluation, docs) |
 | `fix/*` | Tous | Bug fixes |
 | `docs/*` | Tous | Documentation seule |
