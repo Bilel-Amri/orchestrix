@@ -1,0 +1,59 @@
+{
+  "version": "v1.0",
+  "description": "Template d'annotation humaine dual-rater pour 30-50 cas finaux (RQ1 — section 9).",
+  "protocol": {
+    "evaluators": ["Bilel Amri", "Mohamed Amine Gotai"],
+    "cases_count": 40,
+    "rating_dimensions": [
+      "completeness",
+      "dependency_correctness",
+      "grounding",
+      "unjustified_elements"
+    ],
+    "rating_scale": "0-5 par dimension",
+    "disagreement_resolution": "consensus après discussion documentée",
+    "do_not_call_ground_truth": true,
+    "rationale": "Ces cas ne sont jamais qualifiés de 'ground truth' dans le rapport. Ils constituent un référentiel construit et relu manuellement par les deux étudiants, avec protocole d'annotation double."
+  },
+  "cases": [
+    {
+      "id": "case-001",
+      "brief_input": "Construire une application de paiement mobile avec authentification biométrique.",
+      "scoping_agent_output": {
+        "epics": [
+          {"title": "Authentification", "tasks": ["...", "..."]},
+          {"title": "Intégration Stripe", "tasks": ["...", "..."]}
+        ]
+      },
+      "rater_A": {
+        "name": "Bilel Amri",
+        "ratings": {
+          "completeness": 4,
+          "dependency_correctness": 4,
+          "grounding": 3,
+          "unjustified_elements": 1
+        },
+        "comments": "L'epic 'Notifications push' apparaît sans preuve RAG. À discuter."
+      },
+      "rater_B": {
+        "name": "Mohamed Amine Gotai",
+        "ratings": {
+          "completeness": 4,
+          "dependency_correctness": 4,
+          "grounding": 4,
+          "unjustified_elements": 0
+        },
+        "comments": "Toutes les tâches principales sont ancrées à au moins une preuve."
+      },
+      "disagreement": "grounding diffère (3 vs 4)",
+      "consensus": {
+        "grounding": 3.5,
+        "consensus_note": "Une tâche (notifications push) non ancrée ; consensus sur grounding=3.5/5."
+      }
+    }
+  ],
+  "metrics_aggregation": {
+    "method": "Moyenne des consensus, par dimension. Cohen's kappa inter-rater reporté.",
+    "report": "Section 8.2 + 9 du rapport final — RQ1."
+  }
+}

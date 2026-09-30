@@ -1,0 +1,87 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Virtual envs
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Secrets / env
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ML / data artifacts
+mlruns/
+mlartifacts/
+*.pkl
+*.joblib
+*.pt
+*.bin
+*.safetensors
+*.gguf
+*.onnx
+
+# DVC
+data/raw/*.csv.dvc
+data/raw/*.parquet.dvc
+data/raw/*.json.dvc
+data/raw/*.zip.dvc
+data/processed/*.csv.dvc
+data/processed/*.parquet.dvc
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Build
+*.egg-info/
+build/
+dist/
+
+# MLflow local
+mlflow.db
+mlflow/
+
+# Test artifacts
+tests/.pytest_cache/
+.coverage
+htmlcov/
+
+# Docker
+.docker-volumes/
+
+# OS
+Thumbs.db
+.DS_Store

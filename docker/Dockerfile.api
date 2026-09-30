@@ -1,0 +1,37 @@
+FROM python:3.11-slim
+
+# Empêcher Python d'écrire des .pyc et de bufferiser stdout/stderr
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+# Dépendances système minimales (build essentials pour wheels, curl pour healthcheck)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        curl \
+        git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Installer les deps Python (séparé pour cache Docker)
+COPY requirements.txt .
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Copier le code source
+COPY src/ ./src/
+COPY pyproject.toml ./
+COPY data/ ./data/
+COPY scripts/ ./scripts/
+
+# Installer le projet en mode editable
+RUN pip install -e .
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD curl -fsS http://localhost:8000/health || exit 1
+
+EXPOSE 8000
+
+CMD ["uvicorn", "orchestrix.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

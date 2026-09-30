@@ -1,0 +1,153 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orchestrix"
+version = "0.1.0"
+description = "Copilote multi-agent pour le cadrage, la planification, l'exécution contrôlée et la détection des risques des projets logiciels."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "Bilel Amri", email = "bilel.amri@tek-up.de" },
+    { name = "Mohamed Amine Gotai", email = "mohamedamine.gotai@tek-up.de" },
+]
+keywords = ["ai", "agents", "mlops", "llmops", "jira", "copilot", "rag"]
+
+dependencies = [
+    # Core
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "python-dotenv>=1.0",
+
+    # Web / API
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "python-multipart>=0.0.9",
+    "httpx>=0.27",
+
+    # Database
+    "sqlalchemy>=2.0",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
+    "psycopg2-binary>=2.9",
+
+    # Vector store
+    "pgvector>=0.2.4",
+
+    # LangGraph / LangChain
+    "langgraph>=0.2",
+    "langchain>=0.2",
+    "langchain-community>=0.2",
+    "langchain-openai>=0.1",
+    "langchain-ollama>=0.1",
+
+    # Embeddings
+    "sentence-transformers>=2.6",
+    "torch>=2.2",
+
+    # ML
+    "scikit-learn>=1.4",
+    "xgboost>=2.0",
+    "pandas>=2.2",
+    "numpy>=1.26",
+
+    # MLflow
+    "mlflow>=2.12",
+
+    # Jira
+    "atlassian-python-api>=3.41",
+
+    # Observability
+    "opentelemetry-api>=1.24",
+    "opentelemetry-sdk>=1.24",
+    "opentelemetry-exporter-otlp>=1.24",
+    "langfuse>=2.30",
+
+    # Validation / schemas
+    "jsonschema>=4.21",
+
+    # Utilities
+    "structlog>=24.1",
+    "tenacity>=8.2",
+    "pyyaml>=6.0",
+    "click>=8.1",
+    "rich>=13.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=4.1",
+    "pytest-mock>=3.12",
+    "black>=24.2",
+    "ruff>=0.3",
+    "mypy>=1.8",
+    "ipython>=8.20",
+    "jupyter>=1.0",
+    "pre-commit>=3.6",
+]
+gpu = [
+    "vllm>=0.4",
+]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/<votre-org>/orchestrix"
+Documentation = "https://github.com/<votre-org>/orchestrix/tree/main/docs"
+Issues = "https://github.com/<votre-org>/orchestrix/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+orchestrix = ["py.typed", "schemas/*.json", "prompts/*.txt"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N"]
+ignore = ["E501", "B008"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "unit: Unit tests (no external deps)",
+    "integration: Integration tests (DB/Redis required)",
+    "e2e: End-to-end tests (Jira Cloud required)",
+    "slow: Tests that take more than 10 seconds",
+    "benchmark: Performance benchmarks",
+]
+
+[tool.coverage.run]
+source = ["src/orchestrix"]
+omit = ["*/tests/*", "*/__init__.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

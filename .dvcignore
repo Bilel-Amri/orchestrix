@@ -1,0 +1,21 @@
+# DVC ignore — patterns that DVC should never track
+.git/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+
+# Ne pas versionner les fichiers trop lourds ou temporaires
+*.tmp
+*.swp
+.DS_Store
+
+# Logs et artefacts temporaires
+*.log
+logs/

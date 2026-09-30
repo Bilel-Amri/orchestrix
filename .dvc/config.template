@@ -1,0 +1,39 @@
+# ╔══════════════════════════════════════════════════════════════════════╗
+# ║  ORCHESTRIX — DVC remote configuration                              ║
+# ║                                                                      ║
+# ║  Après avoir cloné le repo :                                        ║
+# ║    dvc init                                                          ║
+# ║    cp .dvc/config.template .dvc/config                              ║
+# ║    Éditer .dvc/config avec vos valeurs                              ║
+# ║                                                                      ║
+# ║  Recommandations :                                                  ║
+# ║    - Privé : S3 / GCS / Azure Blob avec credentials                ║
+# ║    - Académique : Google Drive (gratuit jusqu'à 15 Go)             ║
+# ║                                                                      ║
+# ║  Note : les datasets JOSSE/Itemlet/Public Jira font plusieurs Go.   ║
+# ║  Ne JAMAIS les push dans le repo Git.                                ║
+# ╚══════════════════════════════════════════════════════════════════════╝
+
+[core]
+    remote = myremote
+
+# ── Option 1 : Google Drive (gratuit, 15 Go) ────────────────────
+# [remote "myremote"]
+#     url = gdrive://<folder-id>
+#     gdrive_client_id = <your-client-id>
+#     gdrive_client_secret = <your-client-secret>
+
+# ── Option 2 : S3 ─────────────────────────────────────────────────
+# [remote "myremote"]
+#     url = s3://<bucket-name>/orchestrix-data
+#     access_key_id = <your-access-key>
+#     secret_access_key = <your-secret-key>
+
+# ── Option 3 : Local (pour dev uniquement) ───────────────────────
+# [remote "myremote"]
+#     url = /path/to/your/local/backup
+
+# ── Option 4 : Azure Blob ────────────────────────────────────────
+# [remote "myremote"]
+#     url = azure://<container-name>
+#     connection_string = <your-connection-string>

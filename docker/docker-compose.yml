@@ -1,0 +1,108 @@
+version: "3.9"
+
+# =====================================================================
+# ORCHESTRIX — Local development stack
+# Démarre : PostgreSQL+pgvector, Redis, MLflow, Langfuse, l'API.
+# Usage : docker compose -f docker/docker-compose.yml up -d
+# =====================================================================
+
+services:
+  # ── PostgreSQL avec extension pgvector ────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: orchestrix-postgres
+    environment:
+      POSTGRES_DB: orchestrix
+      POSTGRES_USER: orchestrix
+      POSTGRES_PASSWORD: orchestrix_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts/postgres.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orchestrix -d orchestrix"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis (cache, rate limiting, sessions) ───────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: orchestrix-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── MLflow tracking server ───────────────────────────────────────
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.12.1
+    container_name: orchestrix-mlflow
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri postgresql://orchestrix:orchestrix_dev@postgres:5432/mlflow
+      --default-artifact-root /mlflow/artifacts
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_artifacts:/mlflow/artifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── Langfuse (observabilité LLM) ─────────────────────────────────
+  langfuse:
+    image: langfuse/langfuse:2
+    container_name: orchestrix-langfuse
+    environment:
+      DATABASE_URL: postgresql://orchestrix:orchestrix_dev@postgres:5432/langfuse
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: dev-secret-change-me
+      SALT: dev-salt-change-me
+      TELEMETRY_ENABLED: "false"
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── L'API ORCHESTRIX elle-même ───────────────────────────────────
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: orchestrix-api
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://orchestrix:orchestrix_dev@postgres:5432/orchestrix
+      REDIS_URL: redis://redis:6379/0
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      LANGFUSE_HOST: http://langfuse:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
+    volumes:
+      - ../src:/app/src
+      - ../data:/app/data
+
+volumes:
+  postgres_data:
+  redis_data:
+  mlflow_artifacts:
