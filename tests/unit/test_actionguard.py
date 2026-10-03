@@ -346,8 +346,7 @@ class TestCheckRBAC:
         guard = ActionGuard()
         p = self._proposal(
             "create_sprint",
-            {"board_id": 1, "name": "S1",
-             "start_date": "2026-10-05", "end_date": "2026-10-19"},
+            {"board_id": 1, "name": "S1", "start_date": "2026-10-05", "end_date": "2026-10-19"},
             "developer",
         )
         allowed, reason = guard._check_rbac(p)
@@ -370,8 +369,7 @@ class TestCheckRBAC:
         guard = ActionGuard()
         p = self._proposal(
             "create_sprint",
-            {"board_id": 1, "name": "S1",
-             "start_date": "2026-10-05", "end_date": "2026-10-19"},
+            {"board_id": 1, "name": "S1", "start_date": "2026-10-05", "end_date": "2026-10-19"},
             "project_manager",
             user="pm",
         )

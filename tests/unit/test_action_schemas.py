@@ -89,15 +89,11 @@ class TestCreateSprintParams:
 
     def test_equal_dates_rejected(self):
         with pytest.raises(ValidationError):
-            CreateSprintParams(
-                board_id=1, name="S", start_date="2025-10-01", end_date="2025-10-01"
-            )
+            CreateSprintParams(board_id=1, name="S", start_date="2025-10-01", end_date="2025-10-01")
 
     def test_non_positive_board_id_rejected(self):
         with pytest.raises(ValidationError):
-            CreateSprintParams(
-                board_id=0, name="S", start_date="2025-10-01", end_date="2025-10-14"
-            )
+            CreateSprintParams(board_id=0, name="S", start_date="2025-10-01", end_date="2025-10-14")
 
 
 class TestAssignIssueParams:

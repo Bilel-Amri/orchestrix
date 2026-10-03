@@ -57,12 +57,14 @@ SCHEMA_MAP: dict[str, type[_ActionParams]] = {
 # Unknown roles/actions are denied by default (fail-closed).
 RBAC_POLICY: dict[str, frozenset[str]] = {
     "viewer": frozenset(),
-    "developer": frozenset({
-        "create_issue",
-        "transition_issue",
-        "add_comment",
-        "update_field",
-    }),
+    "developer": frozenset(
+        {
+            "create_issue",
+            "transition_issue",
+            "add_comment",
+            "update_field",
+        }
+    ),
     "project_manager": frozenset(SCHEMA_MAP),
     "admin": frozenset(SCHEMA_MAP),
 }
@@ -130,10 +132,7 @@ class ActionGuard:
         if allowed_actions is None:
             return False, f"rôle RBAC inconnu: {role!r}"
         if action_type not in allowed_actions:
-            return False, (
-                f"rôle {role!r} non autorisé à effectuer "
-                f"l'action {action_type!r}"
-            )
+            return False, (f"rôle {role!r} non autorisé à effectuer l'action {action_type!r}")
         return True, ""
 
     def _check_idempotency(self, proposal: ActionProposal) -> tuple[bool, str]:
