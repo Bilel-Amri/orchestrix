@@ -7,11 +7,34 @@ Quand ActionGuard.evaluate() sera implémenté :
   - test que le dry-run mode ne touche jamais la vraie API Jira
 """
 
+from typing import get_args
+
 import pytest
 
 from orchestrix.integrations.jira.mock import JiraMockExecutor
-from orchestrix.reliability.gateway import ActionGuard
+from orchestrix.reliability.gateway import SCHEMA_MAP, ActionGuard
+from orchestrix.schemas.actions import (
+    AddCommentParams,
+    AssignIssueParams,
+    CreateEpicParams,
+    CreateIssueParams,
+    CreateSprintParams,
+    TransitionIssueParams,
+    UpdateFieldParams,
+)
 from orchestrix.schemas.decision import ActionProposal
+
+
+def _proposal(action_type: str, params: dict) -> ActionProposal:
+    """Construit une proposition valide au niveau enveloppe."""
+    return ActionProposal(
+        proposed_by="ops-agent",
+        action_type=action_type,
+        project_key="DEMO",
+        params=params,
+        user_id="alice",
+        user_role="developer",
+    )
 
 
 class TestJiraMockExecutor:
@@ -110,6 +133,155 @@ class TestJiraMockExecutor:
         assert s1["id"] != s2["id"]
 
 
+class TestSchemaMap:
+    """La table de routage doit couvrir exactement les 7 action_type du Literal."""
+
+    def test_maps_each_action_type_to_its_schema(self):
+        assert SCHEMA_MAP == {
+            "create_epic": CreateEpicParams,
+            "create_issue": CreateIssueParams,
+            "create_sprint": CreateSprintParams,
+            "assign_issue": AssignIssueParams,
+            "transition_issue": TransitionIssueParams,
+            "add_comment": AddCommentParams,
+            "update_field": UpdateFieldParams,
+        }
+
+    def test_covers_every_action_type_of_the_proposal_literal(self):
+        declared = set(get_args(ActionProposal.model_fields["action_type"].annotation))
+        assert set(SCHEMA_MAP) == declared
+
+
+class TestCheckSchema:
+    """Règle 1 — validation des params contre la grammaire de l'action."""
+
+    def test_valid_create_issue_passes(self):
+        ok, reason = ActionGuard()._check_schema(
+            _proposal(
+                "create_issue",
+                {
+                    "summary": "Bug paiement Safari",
+                    "description": "Repro 17.4",
+                    "issue_type": "Bug",
+                },
+            )
+        )
+        assert ok is True
+        assert reason == ""
+
+    def test_invalid_create_issue_params_fails(self):
+        ok, reason = ActionGuard()._check_schema(
+            _proposal("create_issue", {"description": "il manque summary"})
+        )
+        assert ok is False
+        assert "create_issue" in reason
+        assert "summary" in reason
+
+    def test_unknown_extra_field_fails(self):
+        ok, reason = ActionGuard()._check_schema(
+            _proposal(
+                "create_issue",
+                {"summary": "S", "description": "D", "priority": "critical"},
+            )
+        )
+        assert ok is False
+        assert "priority" in reason
+
+    def test_unknown_action_type_fails(self):
+        # ActionProposal.action_type est un Literal : on contourne l'enveloppe
+        # pour vérifier que la règle elle-même est fail-closed.
+        proposal = _proposal("create_issue", {"summary": "S", "description": "D"})
+        object.__setattr__(proposal, "action_type", "delete_project")
+
+        ok, reason = ActionGuard()._check_schema(proposal)
+        assert ok is False
+        assert "delete_project" in reason
+
+    @pytest.mark.parametrize(
+        ("action_type", "params"),
+        [
+            ("create_epic", {"summary": "Epic 1", "description": "Desc"}),
+            (
+                "create_sprint",
+                {
+                    "board_id": 1,
+                    "name": "Sprint 14",
+                    "start_date": "2025-10-01",
+                    "end_date": "2025-10-14",
+                },
+            ),
+            ("assign_issue", {"issue_key": "DEMO-1", "assignee": "alice@team.com"}),
+            ("transition_issue", {"issue_key": "DEMO-1", "transition": "In Progress"}),
+            ("add_comment", {"issue_key": "DEMO-1", "body": "vu"}),
+            ("update_field", {"issue_key": "DEMO-1", "field": "summary", "value": "x"}),
+        ],
+    )
+    def test_each_action_type_valid_params_pass(self, action_type, params):
+        ok, reason = ActionGuard()._check_schema(_proposal(action_type, params))
+        assert ok is True, reason
+        assert reason == ""
+
+    @pytest.mark.parametrize(
+        ("action_type", "params", "expected"),
+        [
+            ("create_epic", {"summary": "Epic 1"}, "description"),
+            ("create_sprint", {"board_id": 1, "name": "S", "start_date": "2025-10-01"}, "end_date"),
+            ("assign_issue", {"issue_key": "nope", "assignee": "alice"}, "issue_key"),
+            ("transition_issue", {"issue_key": "DEMO-1"}, "transition"),
+            ("add_comment", {"issue_key": "DEMO-1", "body": "   "}, "body"),
+            ("update_field", {"issue_key": "DEMO-1", "field": "summary"}, "value"),
+        ],
+    )
+    def test_each_action_type_invalid_params_fail(self, action_type, params, expected):
+        ok, reason = ActionGuard()._check_schema(_proposal(action_type, params))
+        assert ok is False
+        assert expected in reason
+
+    def test_params_of_another_action_are_not_accepted(self):
+        """Un dict valide pour create_issue ne doit pas passer pour add_comment."""
+        ok, reason = ActionGuard()._check_schema(
+            _proposal("add_comment", {"summary": "S", "description": "D"})
+        )
+        assert ok is False
+        assert "issue_key" in reason
+
+    def test_empty_params_fail_for_action_with_required_fields(self):
+        ok, reason = ActionGuard()._check_schema(_proposal("create_issue", {}))
+        assert ok is False
+        assert reason
+
+    def test_structural_invariant_enforced(self):
+        ok, reason = ActionGuard()._check_schema(
+            _proposal(
+                "create_sprint",
+                {
+                    "board_id": 1,
+                    "name": "Sprint",
+                    "start_date": "2025-10-14",
+                    "end_date": "2025-10-01",
+                },
+            )
+        )
+        assert ok is False
+        assert "end_date" in reason
+
+    def test_is_side_effect_free(self):
+        """Appeler la règle ne doit rien modifier : ni la proposal, ni self."""
+        guard = ActionGuard()
+        params = {"summary": "S", "description": "D"}
+        proposal = _proposal("create_issue", params)
+
+        before_proposal = proposal.model_dump()
+        before_params = dict(params)
+        before_state = vars(guard).copy()
+
+        assert guard._check_schema(proposal)[0] is True
+
+        assert proposal.model_dump() == before_proposal
+        assert params == before_params
+        assert vars(guard) == before_state
+
+
 @pytest.mark.skip(reason="ActionGuard.evaluate() not implemented yet")
 class TestActionGuardSafeActions:
     def test_safe_issue_creation_passes(self):
@@ -136,3 +308,94 @@ class TestActionGuardUnsafeActions:
 
     def test_prompt_injection_blocked(self):
         pass
+
+
+class TestCheckRBAC:
+    def _proposal(self, action_type, params, role, user="alice"):
+        return ActionProposal(
+            proposed_by="ops-agent",
+            action_type=action_type,
+            project_key="DEMO",
+            params=params,
+            user_id=user,
+            user_role=role,
+        )
+
+    def test_developer_can_create_issue(self):
+        guard = ActionGuard()
+        p = self._proposal(
+            "create_issue",
+            {"summary": "Implement login"},
+            "developer",
+        )
+        allowed, reason = guard._check_rbac(p)
+        assert allowed is True
+        assert reason == ""
+
+    def test_developer_can_add_comment(self):
+        guard = ActionGuard()
+        p = self._proposal(
+            "add_comment",
+            {"issue_key": "DEMO-1", "body": "Done"},
+            "developer",
+        )
+        allowed, reason = guard._check_rbac(p)
+        assert allowed is True
+
+    def test_developer_cannot_create_sprint(self):
+        guard = ActionGuard()
+        p = self._proposal(
+            "create_sprint",
+            {"board_id": 1, "name": "S1", "start_date": "2026-10-05", "end_date": "2026-10-19"},
+            "developer",
+        )
+        allowed, reason = guard._check_rbac(p)
+        assert allowed is False
+        assert "non autorisé" in reason
+
+    def test_viewer_cannot_create_issue(self):
+        guard = ActionGuard()
+        p = self._proposal(
+            "create_issue",
+            {"summary": "Test"},
+            "viewer",
+            user="bob",
+        )
+        allowed, reason = guard._check_rbac(p)
+        assert allowed is False
+        assert "non autorisé" in reason
+
+    def test_project_manager_can_create_sprint(self):
+        guard = ActionGuard()
+        p = self._proposal(
+            "create_sprint",
+            {"board_id": 1, "name": "S1", "start_date": "2026-10-05", "end_date": "2026-10-19"},
+            "project_manager",
+            user="pm",
+        )
+        allowed, reason = guard._check_rbac(p)
+        assert allowed is True
+
+    def test_unknown_role_is_blocked(self):
+        guard = ActionGuard()
+        p = self._proposal(
+            "create_issue",
+            {"summary": "Test"},
+            "unknown_role",
+            user="eve",
+        )
+        allowed, reason = guard._check_rbac(p)
+        assert allowed is False
+        assert "rôle RBAC inconnu" in reason
+
+    def test_unknown_action_is_blocked(self):
+        guard = ActionGuard()
+        p = self._proposal(
+            "create_issue",
+            {"summary": "Test"},
+            "developer",
+        )
+        object.__setattr__(p, "action_type", "delete_everything")
+        allowed, reason = guard._check_rbac(p)
+        assert allowed is False
+        assert "action_type inconnu" in reason

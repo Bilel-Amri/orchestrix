@@ -23,9 +23,51 @@ from __future__ import annotations
 
 import logging
 
+from pydantic import ValidationError
+
+from orchestrix.schemas.actions import (
+    AddCommentParams,
+    AssignIssueParams,
+    CreateEpicParams,
+    CreateIssueParams,
+    CreateSprintParams,
+    TransitionIssueParams,
+    UpdateFieldParams,
+    _ActionParams,
+)
 from orchestrix.schemas.decision import ActionDecision, ActionProposal
 
 logger = logging.getLogger(__name__)
+
+# Règle 1 — table de routage action_type → grammaire de params.
+# Entrée manquante = grammaire désynchronisée du router : fail-closed, pas de repli.
+SCHEMA_MAP: dict[str, type[_ActionParams]] = {
+    "create_epic": CreateEpicParams,
+    "create_issue": CreateIssueParams,
+    "create_sprint": CreateSprintParams,
+    "assign_issue": AssignIssueParams,
+    "transition_issue": TransitionIssueParams,
+    "add_comment": AddCommentParams,
+    "update_field": UpdateFieldParams,
+}
+
+# Static application-level RBAC policy.
+# This is OUR application policy, not Jira's native permission system.
+# The LLM never modifies this policy.
+# Unknown roles/actions are denied by default (fail-closed).
+RBAC_POLICY: dict[str, frozenset[str]] = {
+    "viewer": frozenset(),
+    "developer": frozenset(
+        {
+            "create_issue",
+            "transition_issue",
+            "add_comment",
+            "update_field",
+        }
+    ),
+    "project_manager": frozenset(SCHEMA_MAP),
+    "admin": frozenset(SCHEMA_MAP),
+}
 
 
 class ActionGuard:
@@ -48,12 +90,50 @@ class ActionGuard:
     # ── Règles déterministes (à implémenter une par une) ──────────
 
     def _check_schema(self, proposal: ActionProposal) -> tuple[bool, str]:
-        """Vérifie que les params sont conformes au schéma Jira de l'action."""
-        raise NotImplementedError
+        """Vérifie que les params sont conformes au schéma Jira de l'action.
+
+        Règle PURE : lit `proposal.action_type` / `proposal.params` et la table
+        `SCHEMA_MAP`, ne modifie AUCUN état (ni la proposal, ni self, ni cache).
+        C'est la première porte du gateway : elle doit être sûre à appeler sur
+        une proposition invalide, donc avant toute règle à effet de bord.
+
+        Returns:
+            (True, "") si les params sont valides, sinon (False, raison auditable).
+        """
+        model = SCHEMA_MAP.get(proposal.action_type)
+        if model is None:
+            known = ", ".join(sorted(SCHEMA_MAP))
+            return False, (f"action_type inconnu: {proposal.action_type!r} (connus: {known})")
+
+        try:
+            model.model_validate(proposal.params)
+        except ValidationError as exc:
+            details = "; ".join(
+                f"{'.'.join(str(loc) for loc in err['loc']) or '<racine>'}: {err['msg']}"
+                for err in exc.errors()
+            )
+            return False, (
+                f"params invalides pour {proposal.action_type!r} ({model.__name__}): {details}"
+            )
+
+        return True, ""
 
     def _check_rbac(self, proposal: ActionProposal) -> tuple[bool, str]:
-        """Vérifie que le user_role a le droit d'effectuer cette action."""
-        raise NotImplementedError
+        """Check whether the user's application role may perform the action.
+
+        Deterministic. Side-effect free.
+        Returns (True, "") when authorized, (False, reason) otherwise.
+        """
+        role = proposal.user_role
+        action_type = proposal.action_type
+        if action_type not in SCHEMA_MAP:
+            return False, f"action_type inconnu: {action_type!r}"
+        allowed_actions = RBAC_POLICY.get(role)
+        if allowed_actions is None:
+            return False, f"rôle RBAC inconnu: {role!r}"
+        if action_type not in allowed_actions:
+            return False, (f"rôle {role!r} non autorisé à effectuer l'action {action_type!r}")
+        return True, ""
 
     def _check_idempotency(self, proposal: ActionProposal) -> tuple[bool, str]:
         """Vérifie qu'une action identique n'a pas déjà été exécutée récemment."""

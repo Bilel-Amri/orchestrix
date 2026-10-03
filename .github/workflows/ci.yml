@@ -71,6 +71,28 @@ jobs:
         run: |
           pytest tests/unit -v --cov=src/orchestrix --cov-report=term-missing
 
+      - name: Initialize database schema
+        env:
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/orchestrix_test
+        run: |
+          python - <<'PY'
+          import asyncio
+          from sqlalchemy import text
+          from sqlalchemy.ext.asyncio import create_async_engine
+          from orchestrix.db import Base
+
+          async def init_db():
+              engine = create_async_engine("postgresql+asyncpg://test:test@localhost:5432/orchestrix_test")
+              async with engine.begin() as conn:
+                  # La table `evidence` a une colonne VECTOR(384) : sans
+                  # l'extension pgvector, create_all échoue sur "type vector does not exist".
+                  await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+                  await conn.run_sync(Base.metadata.create_all)
+              await engine.dispose()
+
+          asyncio.run(init_db())
+          PY
+
       - name: Integration tests (DB-backed)
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/orchestrix_test
