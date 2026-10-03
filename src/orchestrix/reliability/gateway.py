@@ -18,6 +18,7 @@ MODES D'EXÉCUTION :
   - Benchmark  : ALLOW → mock executor sur état synthétique en mémoire
                 (AUCUNE action réelle ne doit s'exécuter pendant le benchmark)
 """
+
 from __future__ import annotations
 
 import re
