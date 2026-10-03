@@ -24,7 +24,10 @@ async def async_db_session() -> AsyncGenerator:
     from sqlalchemy import text
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-    from orchestrix.db import Base
+    from orchestrix.db import (
+        Base,
+        models,  # noqa: F401 -- populate Base.metadata
+    )
 
     engine = create_async_engine(
         os.environ.get(

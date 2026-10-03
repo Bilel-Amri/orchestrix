@@ -36,3 +36,10 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
+
+
+# IMPORTANT: importer models ici pour que Base.metadata connaisse toutes les tables.
+# Sans cet import, create_all() ne crée rien car la Base est vide.
+# Placé EN BAS du module : models fait `from orchestrix.db import Base`, donc
+# Base doit déjà exister (sinon import circulaire sur module partiellement initialisé).
+from orchestrix.db import models  # noqa: E402,F401
