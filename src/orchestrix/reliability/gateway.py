@@ -231,10 +231,6 @@ class ActionGuard:
             return False, (f"untrusted_content: motif suspect détecté ({matched[0]}) -> REVIEW")
         return True, ""
 
-    def _check_prompt_injection(self, proposal: ActionProposal) -> tuple[bool, str]:
-        """Vérifie que les valeurs de params ne contiennent pas d'injection."""
-        raise NotImplementedError
-
     # ── ML résiduel (option avancée) ──────────────────────────────
 
     def _compute_residual_risk(self, proposal: ActionProposal) -> float:
