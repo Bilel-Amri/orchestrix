@@ -22,6 +22,7 @@ MODES D'EXÉCUTION :
 from __future__ import annotations
 
 import logging
+import re
 
 from pydantic import ValidationError
 
@@ -68,6 +69,43 @@ RBAC_POLICY: dict[str, frozenset[str]] = {
     "project_manager": frozenset(SCHEMA_MAP),
     "admin": frozenset(SCHEMA_MAP),
 }
+
+FREE_TEXT_FIELDS: dict[str, tuple[str, ...]] = {
+    "create_epic": ("summary", "description"),
+    "create_issue": ("summary", "description"),
+    "create_sprint": ("name", "goal"),
+    "add_comment": ("body",),
+    "update_field": ("value",),
+}
+
+# Patterns compilés une seule fois. Catégorie -> pattern (regex brute, compilée
+# au chargement du module). (?i) est présent dans chaque motif pour la casse,
+# puisque re.Pattern[str] n'accepte pas de flag courant.
+INJECTION_PATTERNS: dict[str, re.Pattern[str]] = {
+    "instruction_override": re.compile(
+        r"(?i)(ignore\s+(your|the|all|previous)\s+instructions?"
+        r"|disregard\s+(your|the|all|previous)"
+        r"|you\s+are\s+now\s+"
+        r"|system\s+prompt"
+        r"|new\s+instructions?:)"
+    ),
+    "privilege_claim": re.compile(
+        r"(?i)(i\s+am\s+(the\s+)?admin"
+        r"|act\s+as\s+(admin|root|sudo)"
+        r"|escalate\s+(privileges?|permissions?))"
+    ),
+    "destructive_command": re.compile(
+        r"(?i)(delete\s+(all|everything|database|table)"
+        r"|drop\s+(table|database|schema)"
+        r"|truncate\s+"
+        r"|rm\s+-rf)"
+    ),
+}
+
+# Contenu actif (XSS, iframes) -> BLOCK direct, pas REVIEW.
+ACTIVE_CONTENT_PATTERN: re.Pattern[str] = re.compile(
+    r"(?i)(<script\b[^>]*>|<iframe\b[^>]*>|javascript:\s*)",
+)
 
 
 class ActionGuard:
@@ -147,9 +185,51 @@ class ActionGuard:
         """Vérifie que l'état Jira permet cette action (ex: pas assigner closed)."""
         raise NotImplementedError
 
-    def _check_prompt_injection(self, proposal: ActionProposal) -> tuple[bool, str]:
-        """Vérifie que les valeurs de params ne contiennent pas d'injection."""
-        raise NotImplementedError
+    def _check_untrusted_content(self, proposal: ActionProposal) -> tuple[bool, str]:
+        """Inspecte les champs de texte libre pour détecter du contenu non fiable.
+
+        Politique:
+          - aucun motif                  -> ALLOW
+          - 1 motif ambigu -> REVIEW (reason contient 'REVIEW')
+          - >= 2 motifs indépendants -> BLOCK (reason contient 'BLOCK')
+          - contenu actif <script>/<iframe> -> BLOCK direct
+
+        Deterministic. Side-effect free.
+        """
+        fields = FREE_TEXT_FIELDS.get(proposal.action_type, ())
+        if not fields:
+            return True, ""
+        candidates: list[str] = []
+        params = proposal.params or {}
+        for field in fields:
+            value = params.get(field)
+            if isinstance(value, str) and value:
+                candidates.append(value)
+        if not candidates:
+            return True, ""
+
+        # 1) contenu actif -> BLOCK direct
+        for text in candidates:
+            if ACTIVE_CONTENT_PATTERN.search(text):
+                return False, (
+                    "untrusted_content: contenu actif détecté (<script> ou <iframe>) -> BLOCK"
+                )
+
+        # 2) motifs suspects
+        matched: list[str] = []
+        for label, pattern in INJECTION_PATTERNS.items():
+            for text in candidates:
+                if pattern.search(text):
+                    matched.append(label)
+                    break  # un seul hit par catégorie suffit
+
+        if len(matched) >= 2:
+            return False, (
+                f"untrusted_content: plusieurs motifs suspects ({', '.join(matched)}) -> BLOCK"
+            )
+        if len(matched) == 1:
+            return False, (f"untrusted_content: motif suspect détecté ({matched[0]}) -> REVIEW")
+        return True, ""
 
     # ── ML résiduel (option avancée) ──────────────────────────────
 
