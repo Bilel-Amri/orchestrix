@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orchestrix"
+version = "3.0.0"
+description = "Plan de projet sourcé : Groq + 5 sources web"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+orchestrix = "orchestrix.cli:main"
+
+[tool.setuptools]
+packages = ["orchestrix"]

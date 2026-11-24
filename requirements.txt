@@ -1,0 +1,8 @@
+# Orchestrix ne demande AUCUN paquet externe.
+#
+# Tout repose sur la bibliothèque standard de Python 3.9+ :
+#   urllib.request  accès HTTP      json      lecture des réponses
+#   http.server     interface web   threading appels en parallèle
+#
+# Installer reste possible et sans effet, mais n'est plus nécessaire :
+#   pip install -r requirements.txt

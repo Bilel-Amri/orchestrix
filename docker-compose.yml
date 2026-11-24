@@ -1,0 +1,63 @@
+# Trois conteneurs, trois responsabilités — voir DOCKER.md pour les commandes
+# ────────────────────────────────────
+#   modele    le modèle entraîné (sklearn) — lourd, remplaçable seul
+#   plateforme Orchestrix — aucune dépendance, expose l'interface sur 8402
+#   mcp       le serveur MCP, parlé en stdio (lancé par le client MCP)
+#
+# Pourquoi le service MCP n'est PAS sur le réseau par défaut : le transport
+# MCP « stdio » fait passer les messages par l'entrée/sortie standard. Le
+# conteneur est donc lancé par le client MCP lui-même (`docker run -i`), et
+# non comme un serveur qui écoute. Voir la section « MCP » du README.
+
+services:
+  modele:
+    build: ./service_modele
+    container_name: orchestrix-modele
+    ports:
+      - "127.0.0.1:8500:8500"
+    volumes:
+      - ./service_modele/modele:/modele:ro
+    environment:
+      PORT: "8500"
+      HOTE: "0.0.0.0"
+      DOSSIER_MODELE: /modele
+      FICHIER_MODELE: model_bundle.joblib
+      VERSION_MODELE: "1.0.0"
+      # JETON_SERVICE: "changez-moi"      # à activer hors réseau local
+    restart: unless-stopped
+
+  plateforme:
+    build: .
+    container_name: orchestrix-plateforme
+    ports:
+      - "8402:8402"
+    environment:
+      URL_MODELE: http://modele:8500
+      DELAI_MODELE: "2.0"
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      MAX_TOKENS_PLAN: ${MAX_TOKENS_PLAN:-16000}
+      PREUVES_TRADUITES_IMMEDIAT: ${PREUVES_TRADUITES_IMMEDIAT:-12}
+    volumes:
+      - ./out:/app/out
+      - ./donnees:/app/donnees
+    depends_on:
+      - modele
+    restart: unless-stopped
+
+  # ── MCP (facultatif) ───────────────────────────────────────────────
+  # Lancé à la demande, pas au démarrage : `docker compose run --rm mcp`.
+  # Il parle sur l'entrée/sortie standard (transport MCP « stdio »), il
+  # n'écoute donc sur aucun port et ne gêne pas les deux autres.
+  mcp:
+    build: ./mcp_complexite
+    container_name: orchestrix-mcp
+    profiles: ["mcp"]                  # absent de `docker compose up`
+    stdin_open: true                   # indispensable pour stdio
+    environment:
+      URL_MODELE: http://modele:8500
+      ORCHESTRIX_OUT: /app/out
+    volumes:
+      - ./out:/app/out:ro
+    depends_on:
+      - modele

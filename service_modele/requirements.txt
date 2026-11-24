@@ -1,0 +1,11 @@
+# Dépendances du service de modèle — isolées de la plateforme.
+# La plateforme Orchestrix, elle, n'installe RIEN.
+#
+# ⚠️ La version de scikit-learn doit être celle qui a servi à produire
+# model_bundle.joblib. Un décalage de version entre l'entraînement et le
+# service se traduit par des prédictions fausses, voire un plantage au
+# chargement de l'artefact. La version utilisée s'affiche dans /sante.
+scikit-learn==1.6.1
+joblib
+numpy
+scipy

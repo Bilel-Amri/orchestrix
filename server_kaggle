@@ -1,0 +1,707 @@
+
+# ============================================================
+# PLANAGENT - API COMPLETE + CLOUDFLARE
+# VERSION 2.2.0 - SANS AUTHENTIFICATION
+# ============================================================
+
+import os
+import re
+import json
+import time
+import subprocess
+import threading
+import requests
+import joblib
+import numpy as np
+import pandas as pd
+
+from pathlib import Path
+from scipy.sparse import hstack, csr_matrix
+from sentence_transformers import SentenceTransformer
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
+import uvicorn
+
+# ============================================================
+# 1. CONFIGURATION
+# ============================================================
+
+MODEL_DIR = Path(
+    "/kaggle/input/models/aminegogotai/modelplan/pytorch/default/1/planagent_model"
+)
+
+PORT = 8000
+
+CLASSES_AUTORISEES = {
+    "Faible",
+    "Moyenne",
+    "Elevee",
+    "Tres_elevee"
+}
+
+print("=" * 65)
+print("PLANAGENT - INITIALISATION COMPLETE")
+print("VERSION 2.2.0 - SANS AUTHENTIFICATION")
+print("=" * 65)
+
+if not MODEL_DIR.exists():
+    raise FileNotFoundError(
+        f"Modèle introuvable : {MODEL_DIR}"
+    )
+
+if not (MODEL_DIR / "model_bundle.joblib").exists():
+    raise FileNotFoundError("model_bundle.joblib introuvable")
+
+# ============================================================
+# 2. CHARGEMENT DU BUNDLE
+# ============================================================
+
+print("\n[1/9] Chargement du modèle...")
+
+bundle = joblib.load(
+    MODEL_DIR / "model_bundle.joblib"
+)
+
+word_vec = bundle["word_vec"]
+char_vec = bundle["char_vec"]
+scaler = bundle["scaler"]
+svd = bundle["svd"]
+
+lr = bundle["lr"]
+sgd = bundle["sgd"]
+hgb = bundle["hgb"]
+emb_lr = bundle["emb_lr"]
+
+with open(
+    MODEL_DIR / "config.json",
+    "r",
+    encoding="utf-8"
+) as f:
+    config = json.load(f)
+
+CLASS_NAMES = {
+    int(k): v
+    for k, v in config["class_names"].items()
+}
+
+CLASS_WEIGHTS = np.asarray(
+    config["class_weights"],
+    dtype=np.float64
+)
+
+if set(CLASS_NAMES.values()) != CLASSES_AUTORISEES:
+    raise ValueError(
+        f"Classes du modèle incorrectes : {CLASS_NAMES}"
+    )
+
+print("Bundle chargé.")
+print("Classifieurs : LR, SGD, HGB, Embedding LR")
+print("Classes :", CLASS_NAMES)
+print("Poids :", CLASS_WEIGHTS)
+
+# ============================================================
+# 3. CHARGEMENT MPNET
+# ============================================================
+
+print("\n[2/9] Chargement de MPNet...")
+
+EMBEDDING_DIR = MODEL_DIR / "embedding_model"
+
+if not EMBEDDING_DIR.exists():
+    raise FileNotFoundError(
+        f"MPNet introuvable : {EMBEDDING_DIR}"
+    )
+
+st_model = SentenceTransformer(
+    str(EMBEDDING_DIR),
+    device="cpu",
+    local_files_only=True
+)
+
+st_model.max_seq_length = 256
+
+print("MPNet chargé.")
+print(
+    "Dimension :",
+    st_model.get_embedding_dimension()
+)
+
+# ============================================================
+# 4. CARACTERISTIQUES TEXTUELLES
+# ============================================================
+
+def meta_features(df):
+
+    t = df["title"].fillna("").astype(str)
+    b = df["body"].fillna("").astype(str)
+
+    tb = (t + " " + b).str.lower()
+
+    f = pd.DataFrame(index=df.index)
+
+    f["t_len"] = np.log1p(t.str.len())
+    f["t_words"] = np.log1p(
+        t.str.split().str.len()
+    )
+
+    f["b_len"] = np.log1p(b.str.len())
+    f["b_words"] = np.log1p(
+        b.str.split().str.len()
+    )
+
+    f["b_lines"] = np.log1p(
+        b.str.count("\n")
+    )
+
+    f["has_body"] = (
+        b.str.strip() != ""
+    ).astype(float)
+
+    f["has_code"] = b.str.contains(
+        r"\{code|\{noformat|```|Exception|Traceback",
+        regex=True
+    ).astype(float)
+
+    f["n_urls"] = np.log1p(
+        b.str.count(r"http")
+    )
+
+    f["n_bullets"] = np.log1p(
+        b.str.count(r"(?m)^\s*[\*\-#]")
+    )
+
+    f["n_questions"] = np.log1p(
+        b.str.count(r"\?")
+    )
+
+    f["n_and"] = np.log1p(
+        tb.str.count(r"\band\b")
+    )
+
+    return f.values.astype(np.float32)
+
+
+# ============================================================
+# 5. FONCTION DE PREDICTION
+# ============================================================
+
+def predict_planagent(title, body=""):
+
+    debut = time.perf_counter()
+
+    title = str(title or "").strip()
+    body = str(body or "").strip()
+
+    if not title and not body:
+        raise ValueError(
+            "Titre et description vides."
+        )
+
+    texte = (
+        "Title: " + title +
+        " Description: " + body
+    )
+
+    df = pd.DataFrame([{
+        "title": title,
+        "body": body
+    }])
+
+    M = scaler.transform(
+        meta_features(df)
+    )
+
+    Xw = word_vec.transform([texte])
+    Xc = char_vec.transform([texte])
+
+    X = hstack(
+        [Xw, Xc, csr_matrix(M)],
+        format="csr"
+    )
+
+    X_sparse = hstack(
+        [Xw, Xc],
+        format="csr"
+    )
+
+    G = np.hstack([
+        svd.transform(X_sparse),
+        M
+    ])
+
+    E = st_model.encode(
+        [texte],
+        batch_size=1,
+        normalize_embeddings=True,
+        convert_to_numpy=True,
+        show_progress_bar=False
+    )
+
+    Z = np.hstack([E, M])
+
+    probabilities = [
+        lr.predict_proba(X),
+        sgd.predict_proba(X),
+        hgb.predict_proba(G),
+        emb_lr.predict_proba(Z)
+    ]
+
+    P = np.mean(
+        probabilities,
+        axis=0
+    )[0]
+
+    P = P * CLASS_WEIGHTS
+
+    total = P.sum()
+
+    if total <= 0 or not np.isfinite(total):
+        raise RuntimeError(
+            "Probabilités invalides."
+        )
+
+    P = P / total
+
+    class_id = int(np.argmax(P))
+
+    classe = CLASS_NAMES[class_id]
+
+    if classe not in CLASSES_AUTORISEES:
+        raise RuntimeError(
+            "Classe non autorisée."
+        )
+
+    return {
+        "class_id": class_id,
+        "complexity": classe,
+        "scores": {
+            CLASS_NAMES[i]: round(
+                float(P[i]), 6
+            )
+            for i in range(len(P))
+        },
+        "processing_time_seconds": round(
+            time.perf_counter() - debut,
+            4
+        )
+    }
+
+
+print("\n[3/9] Fonction de prédiction prête.")
+
+# ============================================================
+# 6. API FASTAPI SANS AUTHENTIFICATION
+# ============================================================
+
+app = FastAPI(
+    title="PlanAgent API",
+    version="2.2.0",
+    description="Classification textuelle des tâches."
+)
+
+
+class Tache(BaseModel):
+
+    title: str = Field(
+        default="",
+        max_length=500
+    )
+
+    body: str = Field(
+        default="",
+        max_length=10000
+    )
+
+
+class RequeteLot(BaseModel):
+
+    taches: list[Tache] = Field(
+        min_length=1,
+        max_length=100
+    )
+
+
+@app.get("/")
+def racine():
+
+    return {
+        "service": "PlanAgent",
+        "version": "2.2.0",
+        "authentification": False,
+        "documentation": "/docs"
+    }
+
+
+@app.get("/health")
+def health():
+
+    return {
+        "status": "ok",
+        "service": "PlanAgent",
+        "modele": "charge",
+        "actif": True,
+        "version": "2.2.0",
+        "classes": sorted(CLASSES_AUTORISEES)
+    }
+
+
+@app.post("/predire")
+def predire(tache: Tache):
+
+    try:
+
+        resultat = predict_planagent(
+            tache.title,
+            tache.body
+        )
+
+        return {
+            "complexite_classe": resultat["complexity"],
+            "origine": "modele",
+            "latence_ms": round(
+                resultat["processing_time_seconds"] * 1000,
+                2
+            ),
+            "scores": resultat["scores"]
+        }
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+
+@app.post("/predire_lot")
+def predire_lot(requete: RequeteLot):
+
+    predictions = []
+
+    debut = time.perf_counter()
+
+    try:
+
+        for tache in requete.taches:
+
+            resultat = predict_planagent(
+                tache.title,
+                tache.body
+            )
+
+            predictions.append({
+                "complexite_classe": resultat["complexity"]
+            })
+
+        return {
+            "predictions": predictions,
+            "modele": {
+                "version": "2.2.0"
+            },
+            "nombre_taches": len(predictions),
+            "latence_ms": round(
+                (time.perf_counter() - debut) * 1000,
+                2
+            )
+        }
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+
+print("\n[4/9] API configurée sans authentification.")
+
+# ============================================================
+# 7. DEMARRAGE FASTAPI
+# ============================================================
+
+print("\n[5/9] Vérification du port...")
+
+import socket
+
+sock = socket.socket(
+    socket.AF_INET,
+    socket.SOCK_STREAM
+)
+
+port_occupe = (
+    sock.connect_ex(("127.0.0.1", PORT)) == 0
+)
+
+sock.close()
+
+if port_occupe:
+    raise RuntimeError(
+        f"Le port {PORT} est déjà utilisé. "
+        "Redémarre le kernel Kaggle avant de relancer cette cellule."
+    )
+
+print("Port disponible.")
+
+print("\n[6/9] Démarrage FastAPI...")
+
+api_config = uvicorn.Config(
+    app,
+    host="0.0.0.0",
+    port=PORT,
+    log_level="info"
+)
+
+api_server = uvicorn.Server(api_config)
+
+api_thread = threading.Thread(
+    target=api_server.run,
+    daemon=True
+)
+
+api_thread.start()
+
+LOCAL_URL = f"http://127.0.0.1:{PORT}"
+
+api_ready = False
+
+for _ in range(60):
+
+    try:
+
+        r = requests.get(
+            LOCAL_URL + "/health",
+            timeout=3
+        )
+
+        if r.status_code == 200:
+            api_ready = True
+            break
+
+    except requests.RequestException:
+        pass
+
+    time.sleep(1)
+
+if not api_ready:
+    raise RuntimeError(
+        "FastAPI n'a pas démarré correctement."
+    )
+
+print("API locale opérationnelle.")
+
+# ============================================================
+# 8. TESTS LOCAUX SANS AUTHENTIFICATION
+# ============================================================
+
+print("\n[7/9] Tests locaux...")
+
+test_payload = {
+    "taches": [
+        {
+            "title": "Créer une page de connexion",
+            "body": "Développer un formulaire de connexion."
+        },
+        {
+            "title": "Concevoir une architecture distribuée",
+            "body": "Concevoir des services indépendants et résilients."
+        }
+    ]
+}
+
+r = requests.post(
+    LOCAL_URL + "/predire_lot",
+    json=test_payload,
+    timeout=180
+)
+
+r.raise_for_status()
+
+print("Test local réussi :")
+print(
+    json.dumps(
+        r.json(),
+        indent=4,
+        ensure_ascii=False
+    )
+)
+
+# ============================================================
+# 9. CLOUDFLARE
+# ============================================================
+
+print("\n[8/9] Préparation de Cloudflare...")
+
+binary = "/usr/local/bin/cloudflared"
+
+if not os.path.exists(binary):
+
+    subprocess.run(
+        [
+            "wget",
+            "-q",
+            "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64",
+            "-O",
+            binary
+        ],
+        check=True
+    )
+
+    os.chmod(binary, 0o755)
+
+subprocess.run(
+    [binary, "--version"],
+    check=True
+)
+
+log_file = "/kaggle/working/cloudflared.log"
+
+cloudflare_log = open(
+    log_file,
+    "w"
+)
+
+cloudflared_process = subprocess.Popen(
+    [
+        binary,
+        "tunnel",
+        "--no-autoupdate",
+        "--url",
+        LOCAL_URL
+    ],
+    stdout=cloudflare_log,
+    stderr=subprocess.STDOUT
+)
+
+public_url = None
+tunnel_connected = False
+
+for _ in range(90):
+
+    if cloudflared_process.poll() is not None:
+        break
+
+    time.sleep(1)
+
+    with open(log_file, "r") as f:
+        logs = f.read()
+
+    match = re.search(
+        r"https://[a-zA-Z0-9-]+\.trycloudflare\.com",
+        logs
+    )
+
+    if match:
+        public_url = match.group(0)
+
+    if public_url and re.search(
+        r"Registered tunnel connection|Connection .* registered",
+        logs,
+        re.IGNORECASE
+    ):
+        tunnel_connected = True
+        break
+
+if not public_url:
+
+    raise RuntimeError(
+        "Cloudflare n'a pas généré d'URL.\n" +
+        logs[-5000:]
+    )
+
+print("URL Cloudflare :", public_url)
+
+if not tunnel_connected:
+    print(
+        "Connexion du tunnel non encore confirmée."
+    )
+
+# ============================================================
+# 10. TEST PUBLIC SANS AUTHENTIFICATION
+# ============================================================
+
+print("\n[9/9] Vérification de l'accès public...")
+
+public_health_ok = False
+
+for tentative in range(12):
+
+    try:
+
+        r = requests.get(
+            public_url + "/health",
+            timeout=10
+        )
+
+        if r.status_code == 200:
+
+            public_health_ok = True
+            break
+
+    except requests.RequestException:
+
+        print(
+            f"Tentative {tentative + 1}/12 : "
+            "connexion indisponible."
+        )
+
+    time.sleep(5)
+
+if public_health_ok:
+
+    print("Health public opérationnel.")
+
+    r = requests.post(
+        public_url + "/predire_lot",
+        json=test_payload,
+        timeout=180
+    )
+
+    r.raise_for_status()
+
+    print("\nTest public réussi :")
+    print(
+        json.dumps(
+            r.json(),
+            indent=4,
+            ensure_ascii=False
+        )
+    )
+
+else:
+
+    print(
+        "\nTunnel public non encore opérationnel."
+    )
+
+    print(
+        "L'API locale reste active."
+    )
+
+    print(
+        "Logs : /kaggle/working/cloudflared.log"
+    )
+
+# ============================================================
+# 11. INFORMATIONS FINALES
+# ============================================================
+
+print("\n" + "=" * 65)
+print("PLANAGENT - RESULTAT FINAL")
+print("=" * 65)
+
+print("Version : 2.2.0")
+print("Authentification : désactivée")
+print("API locale :", LOCAL_URL)
+print("URL publique :", public_url)
+print("Health :", public_url + "/health")
+print("Prédiction :", public_url + "/predire")
+print("Prédiction lot :", public_url + "/predire_lot")
+
+print("\nRoutes disponibles :")
+print("GET  /health")
+print("POST /predire")
+print("POST /predire_lot")
+
+print("\nAucun jeton Bearer nécessaire.")
+print("Garde la session Kaggle active.")
+print("=" * 65)

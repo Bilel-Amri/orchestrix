@@ -1,0 +1,9 @@
+**/__pycache__
+**/*.pyc
+out/
+donnees/plateforme.json
+*.zip
+.git
+.cache
+.env
+service_modele/modele/*.joblib

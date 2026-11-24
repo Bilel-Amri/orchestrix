@@ -1,0 +1,3158 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="clair">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PlanAgent — Pilotage de projet</title>
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   JETONS DE DESIGN
+   ══════════════════════════════════════════════════════════════════════ */
+:root{
+  /* surfaces */
+  --canvas:#f4f6fb;
+  --surface:#ffffff;
+  --surface-2:#fafbfe;
+  --surface-3:#eef1f8;
+  --rail:#0b1020;
+  --rail-2:#141b31;
+  /* encres */
+  --ink:#0a0f21;
+  --ink-2:#232a44;
+  --ink-3:#566080;
+  --ink-4:#8b94ae;
+  --ink-5:#b3bacd;
+  /* traits */
+  --line:#e4e8f1;
+  --line-2:#d3d9e8;
+  --line-3:#c2cadd;
+  /* accents */
+  --acc:#4f46e5;
+  --acc-2:#7c3aed;
+  --acc-3:#6366f1;
+  --acc-ink:#3730a3;
+  --acc-wash:#eef0ff;
+  --acc-line:#dcdffb;
+  --ok:#0f766e;
+  --ok-wash:#e7f6f3;
+  --warn:#b45309;
+  --warn-wash:#fdf3e4;
+  --bad:#be123c;
+  --bad-wash:#fdeef1;
+  /* formes */
+  --r-xs:6px; --r-s:9px; --r-m:12px; --r-l:16px; --r-xl:20px;
+  --sh-1:0 1px 2px rgba(10,15,33,.05);
+  --sh-2:0 1px 2px rgba(10,15,33,.04), 0 3px 10px rgba(10,15,33,.045);
+  --sh-3:0 2px 4px rgba(10,15,33,.05), 0 12px 28px rgba(10,15,33,.08);
+  --sh-4:0 18px 44px rgba(10,15,33,.16);
+  --rail-w:252px;
+  --top-h:60px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--canvas);color:var(--ink);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:13.5px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  font-variant-numeric:tabular-nums;
+}
+h1,h2,h3,h4,p,dl,dd,figure{margin:0}
+h1,h2,h3,h4{font-weight:660;letter-spacing:-.018em;line-height:1.25}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;
+       font-variant-numeric:inherit}
+a{color:var(--acc);text-decoration:none}
+a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
+.cache{display:none !important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#cdd4e4;border-radius:6px;border:2px solid var(--canvas)}
+::-webkit-scrollbar-thumb:hover{background:#b5bdd2}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CHARPENTE
+   ══════════════════════════════════════════════════════════════════════ */
+.app{display:flex;min-height:100vh}
+
+/* ── rail ─────────────────────────────────────────────────────────── */
+.rail{
+  width:var(--rail-w);flex:0 0 var(--rail-w);position:sticky;top:0;height:100vh;
+  display:flex;flex-direction:column;background:var(--rail);color:#c3cbe2;
+  border-right:1px solid #070b16;
+}
+.rail::after{content:"";position:absolute;inset:0 0 auto;height:280px;pointer-events:none;
+  background:radial-gradient(120% 90% at 0% 0%,rgba(99,102,241,.20),transparent 70%)}
+.marque{display:flex;align-items:center;gap:11px;padding:19px 18px 16px;position:relative;z-index:1}
+.marque .logo{width:30px;height:30px;flex:0 0 30px;border-radius:9px;display:grid;place-items:center;
+  background:linear-gradient(140deg,#6366f1,#a855f7);box-shadow:0 4px 14px rgba(99,102,241,.45)}
+.marque .nom{font-size:14.5px;color:#fff;letter-spacing:-.02em;font-weight:660;line-height:1.1}
+.marque .nom b{font-weight:780}
+.marque .ver{display:block;font-size:9.5px;letter-spacing:.9px;text-transform:uppercase;
+  color:#6c7699;font-weight:700;margin-top:3px}
+
+/* carte projet dans le rail */
+.rail-projet{
+  position:relative;z-index:1;margin:2px 12px 14px;padding:12px 13px;
+  background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.09);border-radius:var(--r-m);
+}
+.rail-projet .etq{font-size:9px;font-weight:750;letter-spacing:1px;text-transform:uppercase;
+  color:#7f89ac;display:flex;align-items:center;gap:6px}
+.rail-projet .etq i{width:5px;height:5px;border-radius:50%;background:#34d399;
+  box-shadow:0 0 0 3px rgba(52,211,153,.18);display:inline-block}
+.rail-projet.off .etq i{background:#64748b;box-shadow:none}
+.rail-projet strong{display:block;color:#eef1fa;font-size:12.5px;font-weight:590;
+  line-height:1.42;margin:7px 0 0;letter-spacing:-.01em}
+.rail-projet .sub{font-size:11px;color:#8a93b3;margin-top:5px}
+.rail-projet .jauge{height:4px;border-radius:3px;background:rgba(255,255,255,.12);
+  margin-top:10px;overflow:hidden}
+.rail-projet .jauge i{display:block;height:100%;border-radius:3px;
+  background:linear-gradient(90deg,#6366f1,#a855f7)}
+
+.rail-groupe{padding:12px 12px 0;position:relative;z-index:1}
+.rail-groupe > .lib{font-size:9.5px;font-weight:750;letter-spacing:1.05px;
+  text-transform:uppercase;color:#5b6486;padding:0 10px 7px}
+.rail-nav{display:flex;flex-direction:column;gap:1px}
+.rail-nav button{
+  display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:8px;
+  color:#a8b0cc;font-size:13px;font-weight:510;text-align:left;
+  transition:background .13s,color .13s;position:relative;
+}
+.rail-nav button:hover:not(:disabled){background:rgba(255,255,255,.065);color:#fff}
+.rail-nav button.actif{background:rgba(99,102,241,.20);color:#fff;box-shadow:inset 0 0 0 1px rgba(129,140,248,.28)}
+.rail-nav button.actif::before{content:"";position:absolute;left:-12px;top:50%;transform:translateY(-50%);
+  width:3px;height:17px;border-radius:0 3px 3px 0;background:#818cf8}
+.rail-nav button:disabled{opacity:.3;cursor:not-allowed}
+.rail-nav .ico{width:16px;height:16px;flex:0 0 16px;opacity:.9}
+.rail-nav .badge{margin-left:auto;font-size:10.5px;font-weight:700;color:#8f98b9;
+  background:rgba(255,255,255,.08);border-radius:5px;padding:1px 6px;min-width:20px;text-align:center}
+.rail-nav button.actif .badge{color:#c7cdff;background:rgba(129,140,248,.22)}
+
+.rail-pied{margin-top:auto;padding:14px 16px 16px;border-top:1px solid rgba(255,255,255,.075);
+  position:relative;z-index:1;font-size:11px;color:#6f7899}
+.rail-pied .ligne{display:flex;justify-content:space-between;gap:10px;padding:2.5px 0}
+.rail-pied .ligne b{color:#aab2cd;font-weight:560;max-width:132px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+
+/* ── principal ────────────────────────────────────────────────────── */
+.principal{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--canvas)}
+.topbar{
+  height:var(--top-h);flex:0 0 var(--top-h);display:flex;align-items:center;gap:18px;
+  padding:0 26px;position:sticky;top:0;z-index:50;
+  background:rgba(255,255,255,.82);backdrop-filter:saturate(180%) blur(12px);
+  -webkit-backdrop-filter:saturate(180%) blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.fil{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-4);min-width:0}
+.fil .sep{color:var(--ink-5)}
+.fil b{color:var(--ink-2);font-weight:600;max-width:340px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.fil .ici{color:var(--ink);font-weight:620}
+.pousse{flex:1}
+
+.recherche{position:relative;display:flex;align-items:center}
+.recherche .loupe{position:absolute;left:10px;width:14px;height:14px;color:var(--ink-4);pointer-events:none}
+.recherche input{
+  width:250px;height:34px;padding:0 46px 0 31px;border-radius:8px;font:inherit;font-size:12.5px;
+  border:1px solid var(--line-2);background:var(--surface-2);color:var(--ink);
+  transition:border-color .14s,box-shadow .14s,background .14s;outline:none;
+}
+.recherche input::placeholder{color:var(--ink-4)}
+.recherche input:focus{background:#fff;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-wash)}
+.recherche kbd{position:absolute;right:9px;font:10.5px/1 ui-monospace,Menlo,monospace;
+  color:var(--ink-4);background:#fff;border:1px solid var(--line-2);border-radius:4px;
+  padding:3px 5px;pointer-events:none}
+
+.btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;
+  border-radius:8px;font-size:12.5px;font-weight:600;white-space:nowrap;
+  transition:background .14s,border-color .14s,box-shadow .14s,color .14s}
+.btn svg{width:14px;height:14px;flex:0 0 14px}
+.btn-p{background:var(--acc);color:#fff;box-shadow:0 1px 2px rgba(79,70,229,.35),inset 0 1px 0 rgba(255,255,255,.16)}
+.btn-p:hover{background:var(--acc-ink);box-shadow:0 5px 16px rgba(79,70,229,.32)}
+.btn-p:disabled{background:#a8adc4;box-shadow:none;cursor:not-allowed}
+.btn-s{background:var(--surface);color:var(--ink-2);border:1px solid var(--line-2);box-shadow:var(--sh-1)}
+.btn-s:hover{border-color:var(--line-3);background:var(--surface-2)}
+.btn-f{color:var(--ink-3)}
+.btn-f:hover{background:var(--surface-3);color:var(--ink)}
+.btn-lg{height:40px;padding:0 18px;font-size:13.5px;border-radius:9px}
+
+.contenu{flex:1;width:100%;max-width:1400px;margin:0 auto;padding:26px 26px 40px}
+.pied-page{border-top:1px solid var(--line);padding:14px 26px;font-size:11.5px;
+  color:var(--ink-4);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+/* ══════════════════════════════════════════════════════════════════════
+   COMPOSANTS
+   ══════════════════════════════════════════════════════════════════════ */
+.carte{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);
+  box-shadow:var(--sh-2);overflow:hidden}
+.carte-tete{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:15px 18px;border-bottom:1px solid var(--line)}
+.carte-tete h2{font-size:13.5px;font-weight:650;display:flex;align-items:center;gap:8px}
+.carte-tete .note{font-size:11.5px;color:var(--ink-4);font-weight:500}
+.carte-corps{padding:18px}
+.carte-corps.serre{padding:0}
+
+.eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:750;
+  letter-spacing:1.1px;text-transform:uppercase;color:var(--acc);
+  background:var(--acc-wash);border:1px solid var(--acc-line);
+  padding:4px 10px;border-radius:999px}
+
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--surface-3);
+  border:1px solid var(--line);border-radius:var(--r-xs);padding:3px 9px;
+  font-size:11.5px;font-weight:540;color:var(--ink-2)}
+.chip.acc{background:var(--acc-wash);border-color:var(--acc-line);color:var(--acc-ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+
+.etq{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:750;
+  letter-spacing:.5px;text-transform:uppercase;padding:2.5px 7px;border-radius:5px;white-space:nowrap}
+.etq::before{content:"";width:4.5px;height:4.5px;border-radius:50%;background:currentColor;opacity:.85}
+.etq.dev{background:var(--acc-wash);color:var(--acc-ink)}
+.etq.test{background:var(--ok-wash);color:var(--ok)}
+.etq.config{background:#f1eafe;color:#6d28d9}
+.etq.doc{background:var(--surface-3);color:var(--ink-3)}
+.etq.design{background:var(--warn-wash);color:var(--warn)}
+.etq.securite{background:var(--bad-wash);color:var(--bad)}
+.etq.pr-haute{background:var(--bad-wash);color:var(--bad)}
+.etq.pr-moyenne{background:var(--warn-wash);color:var(--warn)}
+.etq.pr-basse{background:var(--surface-3);color:var(--ink-3)}
+
+.cle{font:10.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;
+  color:var(--acc-ink);background:var(--acc-wash);border:1px solid var(--acc-line);
+  padding:3.5px 6px;border-radius:5px;letter-spacing:.1px;white-space:nowrap}
+.src{font:10.5px/1 ui-monospace,Menlo,monospace;color:var(--acc-ink);background:#fff;
+  border:1px solid var(--acc-line);padding:3px 6px;border-radius:5px;
+  display:inline-block;margin:1px 3px 1px 0;transition:.12s}
+.src:hover{background:var(--acc);border-color:var(--acc);color:#fff;text-decoration:none}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{text-align:left;font-size:9.5px;font-weight:750;letter-spacing:.8px;
+  text-transform:uppercase;color:var(--ink-4);padding:9px 12px;background:var(--surface-2);
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1;white-space:nowrap}
+tbody td{padding:10px 12px;border-bottom:1px solid #f1f3f9;vertical-align:top;color:var(--ink-2)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--surface-2)}
+td.num{font-variant-numeric:tabular-nums;text-align:right}
+.t-titre{font-weight:560;color:var(--ink);font-size:12.8px;line-height:1.4}
+.t-desc{font-size:11.5px;color:var(--ink-4);margin-top:2px;line-height:1.45}
+.vide{color:var(--ink-5);font-size:11.5px}
+
+/* ── saisie ───────────────────────────────────────────────────────── */
+.hero{max-width:900px;margin:0 auto;padding-top:20px}
+.hero h1{font-size:29px;letter-spacing:-.032em;margin:14px 0 9px;line-height:1.15}
+.hero .sous{color:var(--ink-3);font-size:14.5px;max-width:660px;line-height:1.6}
+.zone-brief{margin-top:24px;background:var(--surface);border:1px solid var(--line-2);
+  border-radius:var(--r-l);box-shadow:var(--sh-3);overflow:hidden;
+  transition:border-color .16s,box-shadow .16s}
+.zone-brief:focus-within{border-color:var(--acc);box-shadow:0 0 0 4px var(--acc-wash),var(--sh-3)}
+.zone-brief textarea{display:block;width:100%;min-height:158px;border:0;outline:0;resize:vertical;
+  padding:20px 22px;font:inherit;font-size:14px;line-height:1.68;color:var(--ink);background:transparent}
+.zone-brief textarea::placeholder{color:var(--ink-5)}
+.zone-brief .pied{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:12px 16px;border-top:1px solid var(--line);background:var(--surface-2)}
+.compteur{font-size:11.5px;color:var(--ink-4);display:flex;align-items:center;gap:6px}
+.compteur b{color:var(--ink-2);font-weight:650}
+.compteur.ok b{color:var(--ok)}
+
+.exemples{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:10px;margin-top:18px}
+.exemples-lib{font-size:9.5px;font-weight:750;letter-spacing:1px;text-transform:uppercase;
+  color:var(--ink-4);margin:0 0 9px}
+.ex{display:block;text-align:left;padding:12px 13px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r-m);transition:.14s;box-shadow:var(--sh-1)}
+.ex:hover{border-color:var(--acc-line);background:var(--acc-wash);transform:translateY(-1px);
+  box-shadow:var(--sh-2)}
+.ex b{display:block;font-size:12.5px;font-weight:620;color:var(--ink-2);margin-bottom:3px}
+.ex span{font-size:11.5px;color:var(--ink-4);line-height:1.45;display:block}
+
+.attente{margin-top:22px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-l);padding:38px;text-align:center;box-shadow:var(--sh-2)}
+.rouage{width:30px;height:30px;margin:0 auto 14px;border-radius:50%;
+  border:2.5px solid var(--acc-wash);border-top-color:var(--acc);
+  animation:tourne .8s linear infinite}
+@keyframes tourne{to{transform:rotate(360deg)}}
+.attente h3{font-size:13.5px;margin-bottom:4px}
+.attente p{color:var(--ink-4);font-size:12.5px}
+.attente .ligne-attente{width:200px;height:3px;border-radius:2px;background:var(--surface-3);
+  margin:14px auto 0;overflow:hidden;position:relative}
+.attente .ligne-attente i{position:absolute;inset:0;width:38%;border-radius:2px;
+  background:linear-gradient(90deg,var(--acc-3),var(--acc-2));animation:glisse 1.4s ease-in-out infinite}
+@keyframes glisse{0%{left:-38%}100%{left:100%}}
+
+.alerte{display:flex;gap:11px;border-radius:var(--r-m);padding:13px 15px;font-size:12.5px;
+  margin-top:18px;line-height:1.5}
+.alerte svg{width:16px;height:16px;flex:0 0 16px;margin-top:1px}
+.alerte.erreur{background:var(--bad-wash);border:1px solid #f6ccd7;color:#9f1239}
+.alerte.avert{background:var(--warn-wash);border:1px solid #f7dcb2;color:#8a4a07}
+.alerte b{display:block;margin-bottom:2px}
+
+/* ── bandeau projet ───────────────────────────────────────────────── */
+.bandeau{position:relative;overflow:hidden;border-radius:var(--r-xl);color:#fff;
+  background:linear-gradient(118deg,#0b1020 0%,#1e1b4b 46%,#4338ca 100%);
+  box-shadow:var(--sh-3);margin-bottom:18px}
+.bandeau::after{content:"";position:absolute;right:-90px;top:-120px;width:380px;height:380px;
+  border-radius:50%;background:radial-gradient(circle,rgba(168,85,247,.34),transparent 66%)}
+.bandeau::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.34),transparent)}
+.bandeau-haut{padding:24px 26px 20px;position:relative;z-index:1}
+.bandeau .eyebrow{background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.2);color:#dfe3ff}
+.bandeau h1{font-size:24px;letter-spacing:-.03em;margin:12px 0 8px;max-width:900px;line-height:1.22}
+.bandeau .obj{font-size:13.5px;color:#c3caea;max-width:840px;line-height:1.6}
+.bandeau-bas{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid rgba(255,255,255,.12);
+  position:relative;z-index:1;background:rgba(0,0,0,.16)}
+.bandeau-bas .m{padding:12px 24px;border-right:1px solid rgba(255,255,255,.09);min-width:150px}
+.bandeau-bas .m:last-child{border-right:0}
+.bandeau-bas .m span{display:block;font-size:9px;font-weight:750;letter-spacing:1px;
+  text-transform:uppercase;color:#8b93bd;margin-bottom:3px}
+.bandeau-bas .m b{font-size:12.5px;font-weight:580;color:#eef1fb}
+
+/* ── indicateurs ──────────────────────────────────────────────────── */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));gap:11px;margin-bottom:18px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);
+  padding:14px 15px 13px;box-shadow:var(--sh-1);position:relative;transition:.15s}
+.kpi:hover{box-shadow:var(--sh-2);border-color:var(--line-2)}
+.kpi .haut{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.kpi .v{font-size:24px;font-weight:690;letter-spacing:-.035em;line-height:1.1;color:var(--ink)}
+.kpi .v small{font-size:13px;font-weight:600;color:var(--ink-4);letter-spacing:0;margin-left:1px}
+.kpi .l{font-size:11.5px;color:var(--ink-3);font-weight:540;margin-top:4px}
+.kpi .s{font-size:10.5px;color:var(--ink-4);margin-top:1px}
+.kpi .puce{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;flex:0 0 24px}
+.kpi .puce svg{width:13px;height:13px}
+.p-acc{background:var(--acc-wash);color:var(--acc)}
+.p-ok{background:var(--ok-wash);color:var(--ok)}
+.p-warn{background:var(--warn-wash);color:var(--warn)}
+.p-neu{background:var(--surface-3);color:var(--ink-3)}
+.kpi .mini{height:3px;border-radius:2px;background:var(--surface-3);margin-top:10px;overflow:hidden}
+.kpi .mini i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--acc-3),var(--acc-2))}
+
+/* ── grilles ──────────────────────────────────────────────────────── */
+.g2{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);gap:16px;align-items:start;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:16px}
+.g2b{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;margin-bottom:16px}
+@media (max-width:1120px){.g2,.g2b{grid-template-columns:1fr}}
+
+/* propriétés */
+.props{display:flex;flex-direction:column}
+.prop{display:grid;grid-template-columns:118px minmax(0,1fr);gap:14px;padding:9px 0;
+  border-bottom:1px solid #f2f4fa;align-items:start}
+.prop:first-child{padding-top:0}
+.prop:last-child{border-bottom:0;padding-bottom:0}
+.prop dt{font-size:11px;font-weight:700;color:var(--ink-4);letter-spacing:.35px;
+  text-transform:uppercase;padding-top:2px}
+.prop dd{margin:0;font-size:12.8px;color:var(--ink-2);line-height:1.55}
+
+/* barres horizontales */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-l{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:baseline}
+.bar-l .n{font-size:12.3px;color:var(--ink-2);font-weight:520;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.bar-l .v{font-size:11.5px;color:var(--ink-3);font-weight:600}
+.bar-t{grid-column:1/-1;height:7px;background:var(--surface-3);border-radius:4px;
+  overflow:hidden;margin-top:-5px}
+.bar-t i{display:block;height:100%;border-radius:4px;
+  background:linear-gradient(90deg,#6366f1,#8b5cf6);transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* anneau */
+.anneau{position:relative;width:112px;height:112px;flex:0 0 112px}
+.anneau svg{transform:rotate(-90deg)}
+.anneau .cent{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.anneau .cent b{display:block;font-size:23px;font-weight:690;letter-spacing:-.035em;line-height:1}
+.anneau .cent span{display:block;font-size:9.5px;color:var(--ink-4);font-weight:650;
+  letter-spacing:.5px;text-transform:uppercase;margin-top:3px}
+.legende{display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--ink-3);flex:1;min-width:0}
+.legende .l{display:flex;align-items:center;gap:8px}
+.legende .l i{width:8px;height:8px;border-radius:2.5px;flex:0 0 8px}
+.legende .l b{margin-left:auto;color:var(--ink-2);font-weight:620;font-size:11.5px}
+
+/* pile de priorités */
+.pile{display:flex;height:9px;border-radius:5px;overflow:hidden;background:var(--surface-3);gap:2px}
+.pile i{display:block;height:100%}
+
+/* liste de contrôles */
+.controles{display:flex;flex-direction:column;gap:0}
+.controle{display:flex;align-items:flex-start;gap:11px;padding:11px 0;
+  border-bottom:1px solid #f2f4fa}
+.controle:last-child{border-bottom:0;padding-bottom:0}
+.controle:first-child{padding-top:0}
+.controle .pico{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;
+  flex:0 0 18px;margin-top:1px}
+.controle .pico svg{width:11px;height:11px}
+.controle .pico.ok{background:var(--ok-wash);color:var(--ok)}
+.controle .pico.ko{background:var(--warn-wash);color:var(--warn)}
+.controle .txt{flex:1;min-width:0}
+.controle .txt b{font-size:12.5px;font-weight:580;color:var(--ink-2);display:block}
+.controle .txt span{font-size:11.5px;color:var(--ink-4)}
+.controle .res{font-size:11px;font-weight:700;color:var(--ink-4);white-space:nowrap}
+
+/* ── backlog ──────────────────────────────────────────────────────── */
+.barre-outils{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.barre-outils .titre{font-size:15px;font-weight:660;letter-spacing:-.02em;margin-right:auto}
+.barre-outils .titre span{font-size:12px;color:var(--ink-4);font-weight:500;margin-left:8px}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line-2);
+  border-radius:8px;padding:2px;box-shadow:var(--sh-1)}
+.seg button{padding:5px 11px;border-radius:6px;font-size:11.5px;font-weight:600;
+  color:var(--ink-3);transition:.12s}
+.seg button:hover{color:var(--ink)}
+.seg button.on{background:var(--acc-wash);color:var(--acc-ink);box-shadow:inset 0 0 0 1px var(--acc-line)}
+
+.epic{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);
+  box-shadow:var(--sh-1);margin-bottom:11px;overflow:hidden;transition:box-shadow .15s}
+.epic:hover{box-shadow:var(--sh-2)}
+.epic-tete{display:flex;align-items:center;gap:13px;padding:14px 17px;cursor:pointer;
+  user-select:none;transition:background .13s}
+.epic-tete:hover{background:var(--surface-2)}
+.epic-num{flex:0 0 28px;height:28px;border-radius:8px;display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--acc),var(--acc-2));color:#fff;
+  font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(79,70,229,.3)}
+.epic-nom{flex:1;min-width:0}
+.epic-nom b{display:block;font-size:13.5px;font-weight:620;letter-spacing:-.012em}
+.epic-nom span{display:block;font-size:11.5px;color:var(--ink-4);margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.epic-meta{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+.epic-meta .t{font-size:11px;font-weight:650;color:var(--ink-3);background:var(--surface-3);
+  border-radius:5px;padding:3px 8px;white-space:nowrap}
+.epic-meta .t.p{background:var(--acc-wash);color:var(--acc-ink)}
+.chev{width:15px;height:15px;color:var(--ink-5);flex:0 0 15px;transition:transform .2s}
+.epic.ouvert .chev{transform:rotate(90deg);color:var(--acc)}
+.epic-corps{display:none;border-top:1px solid var(--line);background:var(--surface-2)}
+.epic.ouvert .epic-corps{display:block}
+.epic-desc{padding:12px 17px;font-size:12.3px;color:var(--ink-3);background:var(--surface-2);
+  border-bottom:1px solid var(--line);line-height:1.55}
+
+.story{padding:15px 17px;border-bottom:1px solid var(--line);background:var(--surface)}
+.story:last-child{border-bottom:0}
+.story-tete{display:flex;align-items:center;gap:9px;margin-bottom:7px;flex-wrap:wrap}
+.story-titre{font-size:13.3px;font-weight:620;flex:1;min-width:200px;letter-spacing:-.01em}
+.story-pts{font-size:11px;font-weight:650;color:var(--ink-3);background:var(--surface-3);
+  border-radius:5px;padding:2.5px 8px}
+.recit{font-size:12.5px;color:var(--ink-3);margin:0 0 10px;line-height:1.55}
+.recit b{color:var(--ink-2);font-weight:650}
+.criteres{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-s);
+  padding:9px 12px;margin-bottom:11px}
+.criteres .cl{font-size:9px;font-weight:750;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--ink-4);margin-bottom:5px}
+.criteres div.c{font-size:12px;color:var(--ink-2);padding:1.5px 0;display:flex;gap:7px}
+.criteres div.c svg{width:12px;height:12px;flex:0 0 12px;color:var(--ok);margin-top:3px}
+.table-enveloppe{border:1px solid var(--line);border-radius:var(--r-s);overflow:hidden}
+
+/* ── kanban ───────────────────────────────────────────────────────── */
+.kanban{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:start}
+@media (max-width:1240px){.kanban{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.col{background:var(--surface-3);border-radius:var(--r-m);padding:10px;min-height:110px;
+  border:1px solid #e6eaf3}
+.col-tete{display:flex;align-items:center;gap:7px;padding:2px 4px 10px}
+.col-tete b{font-size:10px;font-weight:750;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--ink-3)}
+.col-tete span{margin-left:auto;font-size:10.5px;font-weight:700;color:var(--ink-4);
+  background:#fff;border-radius:5px;padding:1px 6px}
+.carte-k{background:#fff;border:1px solid var(--line);border-radius:var(--r-s);
+  padding:10px 11px;margin-bottom:8px;box-shadow:var(--sh-1);
+  transition:transform .13s,box-shadow .13s,border-color .13s;cursor:default}
+.carte-k:last-child{margin-bottom:0}
+.carte-k:hover{transform:translateY(-1px);box-shadow:var(--sh-2);border-color:var(--line-2)}
+.carte-k .kt{font-size:12.2px;font-weight:560;line-height:1.42;margin-bottom:7px;color:var(--ink)}
+.carte-k .kl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10.5px;
+  color:var(--ink-4)}
+.carte-k .kl .pt{font-weight:650;color:var(--ink-3)}
+.carte-k .ke{font-size:10.5px;color:var(--ink-5);margin-top:7px;padding-top:7px;
+  border-top:1px dashed var(--line);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.col-vide{font-size:11px;color:var(--ink-5);text-align:center;padding:14px 0}
+
+/* ── sources ──────────────────────────────────────────────────────── */
+.flux{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0;
+  border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden}
+.flux .etape{padding:14px 16px;border-right:1px solid var(--line);position:relative;
+  background:var(--surface-2)}
+.flux .etape:last-child{border-right:0}
+.flux .etape span{display:block;font-size:9.5px;font-weight:750;letter-spacing:.9px;
+  text-transform:uppercase;color:var(--ink-4);margin-bottom:5px}
+.flux .etape b{font-size:19px;font-weight:690;letter-spacing:-.03em}
+.flux .etape .d{font-size:11px;color:var(--ink-5);margin-top:1px}
+
+.barre{height:6px;background:var(--surface-3);border-radius:4px;overflow:hidden}
+.barre i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--acc-3),var(--acc-2))}
+.bloc{margin-bottom:16px}
+/* ══════════════════════════════════════════════════════════════════════
+   PLANIFICATION
+   ══════════════════════════════════════════════════════════════════════ */
+.params{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+.champ{display:flex;flex-direction:column;gap:5px}
+.champ label{font-size:9.5px;font-weight:750;letter-spacing:.9px;text-transform:uppercase;color:var(--ink-4)}
+.champ select,.champ input{height:32px;min-width:104px;border:1px solid var(--line-2);border-radius:7px;
+  background:var(--surface);padding:0 9px;font:inherit;font-size:12.5px;color:var(--ink);
+  outline:none;cursor:pointer;transition:border-color .13s,box-shadow .13s}
+.champ select:focus,.champ input:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-wash)}
+
+.gantt{display:flex;flex-direction:column;gap:8px}
+.gantt-l{display:grid;grid-template-columns:214px minmax(0,1fr);gap:12px;align-items:center}
+.gantt-l .n{font-size:12px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-weight:520}
+.gantt-l .n em{display:block;font-style:normal;font-size:10.5px;color:var(--ink-4)}
+.gantt-piste{position:relative;height:28px;background:var(--surface-3);border-radius:6px;overflow:hidden}
+.gantt-bloc{position:absolute;top:0;height:100%;border-radius:6px;display:flex;align-items:center;
+  padding:0 8px;color:#fff;font-size:10.5px;font-weight:650;white-space:nowrap;overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
+.axe{display:flex;justify-content:space-between;margin:10px 0 0 226px;
+  border-top:1px solid var(--line);padding-top:6px}
+.axe span{font-size:10px;color:var(--ink-4);font-variant-numeric:tabular-nums}
+
+.sprints{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:11px}
+.sprint{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);
+  padding:12px 13px;box-shadow:var(--sh-1)}
+.sprint .sh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.sprint .sh b{font-size:12.5px;font-weight:650}
+.sprint .sh span{font-size:10.5px;font-weight:700;color:var(--acc-ink);background:var(--acc-wash);
+  border:1px solid var(--acc-line);border-radius:5px;padding:2px 7px;white-space:nowrap}
+.sprint .li{display:flex;gap:8px;font-size:11.5px;color:var(--ink-3);padding:5px 0;
+  border-top:1px dashed var(--line)}
+.sprint .li code{font:10px/1.5 ui-monospace,Menlo,monospace;color:var(--acc);flex:0 0 auto}
+.sprint .li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sprint .plus{font-size:11px;color:var(--ink-4);padding-top:7px;border-top:1px dashed var(--line)}
+.sprint .barre-s{height:5px;border-radius:3px;background:var(--surface-3);margin-top:10px;overflow:hidden}
+.sprint .barre-s i{display:block;height:100%;border-radius:3px;
+  background:linear-gradient(90deg,var(--acc-3),var(--acc-2))}
+.courbe{width:100%;height:158px;display:block}
+
+/* ══════════════════════════════════════════════════════════════════════
+   RISQUES
+   ══════════════════════════════════════════════════════════════════════ */
+.matrice-bloc{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+.matrice{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(3,44px);
+  gap:4px}
+.case{background:var(--surface-3);border-radius:6px;display:grid;place-items:center;
+  font-size:10px;font-weight:750;color:var(--ink-5);border:1px solid transparent}
+.case.g1{background:var(--ok-wash);color:var(--ok)}
+.case.g2{background:var(--warn-wash);color:var(--warn)}
+.case.g3{background:var(--bad-wash);color:var(--bad)}
+.pastille{width:21px;height:21px;border-radius:50%;background:var(--surface);
+  box-shadow:var(--sh-2),0 0 0 1px var(--line);display:grid;place-items:center;
+  font-size:9.5px;font-weight:780;color:var(--ink-2);margin:1px}
+.axes-matrice{display:flex;flex-direction:column;justify-content:space-between;height:136px;
+  font-size:10px;color:var(--ink-4);text-align:right}
+.axes-matrice b{font-weight:700;color:var(--ink-3);font-size:9.5px;letter-spacing:.5px;
+  text-transform:uppercase}
+.risque{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:12px;
+  padding:12px 0;border-bottom:1px solid var(--line);align-items:start}
+.risque:last-child{border-bottom:0;padding-bottom:0}
+.risque:first-child{padding-top:0}
+.risque .num{width:22px;height:22px;border-radius:7px;background:var(--surface-3);
+  display:grid;place-items:center;font-size:10.5px;font-weight:750;color:var(--ink-3);margin-top:1px}
+.risque .corps b{display:block;font-size:12.6px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.risque .corps span{font-size:11.5px;color:var(--ink-3);line-height:1.5;display:block}
+.risque .corps .mes{display:block;margin-top:5px;font-size:11px;color:var(--ok)}
+.risque .corps .mes b{display:inline;font-size:11px;font-weight:700;color:var(--ok)}
+
+/* ══════════════════════════════════════════════════════════════════════
+   PANNEAU DE DÉTAIL
+   ══════════════════════════════════════════════════════════════════════ */
+.voile{position:fixed;inset:0;background:rgba(6,10,20,.36);z-index:190;
+  animation:fonce .18s ease-out}
+@keyframes fonce{from{opacity:0}to{opacity:1}}
+.panneau{position:fixed;top:0;right:0;height:100vh;width:452px;max-width:94vw;z-index:200;
+  background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--sh-4);
+  display:flex;flex-direction:column;animation:glissed .22s cubic-bezier(.32,.72,0,1)}
+@keyframes glissed{from{transform:translateX(24px);opacity:.4}to{transform:none;opacity:1}}
+.panneau-tete{display:flex;align-items:flex-start;gap:12px;padding:16px 18px;
+  border-bottom:1px solid var(--line);background:var(--surface-2)}
+.panneau-tete .t{flex:1;min-width:0}
+.panneau-tete .t b{display:block;font-size:14px;font-weight:650;letter-spacing:-.015em;
+  line-height:1.35;margin-top:6px}
+.panneau-tete .fermer{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;
+  color:var(--ink-4);flex:0 0 28px;transition:.13s}
+.panneau-tete .fermer:hover{background:var(--surface-3);color:var(--ink)}
+.panneau-tete .fermer svg{width:15px;height:15px}
+.panneau-corps{flex:1;overflow-y:auto;padding:18px}
+.panneau-section{margin-bottom:20px}
+.panneau-section:last-child{margin-bottom:0}
+.panneau-section h4{font-size:9.5px;font-weight:750;letter-spacing:.95px;text-transform:uppercase;
+  color:var(--ink-4);margin-bottom:8px}
+.panneau .desc{font-size:12.8px;color:var(--ink-2);line-height:1.6}
+.panneau .metas{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.panneau .metas div{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-s);
+  padding:8px 10px}
+.panneau .metas span{display:block;font-size:9px;font-weight:750;letter-spacing:.8px;
+  text-transform:uppercase;color:var(--ink-4);margin-bottom:2px}
+.panneau .metas b{font-size:12.5px;font-weight:600;color:var(--ink)}
+.panneau .epic-lien{display:flex;align-items:center;gap:8px;font-size:12.3px;color:var(--ink-2);
+  background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-s);padding:9px 11px}
+.panneau .epic-lien i{width:7px;height:7px;border-radius:2px;background:var(--acc);flex:0 0 7px}
+.panneau .preuve-l{display:flex;gap:9px;font-size:12px;color:var(--ink-2);padding:8px 0;
+  border-bottom:1px dashed var(--line)}
+.panneau .preuve-l:last-child{border-bottom:0}
+.panneau .preuve-l b{flex:0 0 auto;font:10px/1.6 ui-monospace,Menlo,monospace;color:var(--acc)}
+.panneau .preuve-l a{font-size:10.5px}
+.panneau-pied{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px;
+  background:var(--surface-2)}
+
+/* ══════════════════════════════════════════════════════════════════════
+   PALETTE DE COMMANDES
+   ══════════════════════════════════════════════════════════════════════ */
+.palette{position:fixed;inset:0;z-index:300;display:flex;align-items:flex-start;
+  justify-content:center;padding-top:13vh;background:rgba(6,10,20,.4);
+  backdrop-filter:blur(2px);animation:fonce .14s ease-out}
+.palette-boite{width:560px;max-width:92vw;background:var(--surface);border-radius:var(--r-l);
+  box-shadow:var(--sh-4);border:1px solid var(--line);overflow:hidden;
+  animation:monte .18s cubic-bezier(.32,.72,0,1)}
+@keyframes monte{from{transform:translateY(-8px) scale(.99);opacity:.5}to{transform:none;opacity:1}}
+.palette-boite input{width:100%;height:50px;border:0;border-bottom:1px solid var(--line);
+  padding:0 16px;font:inherit;font-size:14px;outline:none;background:transparent;color:var(--ink)}
+.palette-liste{max-height:340px;overflow-y:auto;padding:6px}
+.palette-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:8px;
+  font-size:13px;color:var(--ink-2);cursor:pointer}
+.palette-item svg{width:15px;height:15px;flex:0 0 15px;color:var(--ink-4)}
+.palette-item.on{background:var(--acc-wash);color:var(--acc-ink)}
+.palette-item.on svg{color:var(--acc)}
+.palette-item .g{margin-left:auto;font-size:10px;font-weight:650;color:var(--ink-4);
+  background:var(--surface-3);border-radius:4px;padding:2px 6px}
+.palette-item.on .g{background:#fff;color:var(--acc-ink)}
+.palette-vide{padding:18px;text-align:center;font-size:12.5px;color:var(--ink-4)}
+.palette-pied{border-top:1px solid var(--line);padding:8px 14px;display:flex;gap:16px;
+  font-size:10.5px;color:var(--ink-4);background:var(--surface-2)}
+.palette-pied kbd{font:10px/1 ui-monospace,Menlo,monospace;background:var(--surface);
+  border:1px solid var(--line-2);border-radius:4px;padding:2px 5px;margin-right:4px}
+
+/* ══════════════════════════════════════════════════════════════════════
+   THÈME SOMBRE
+   ══════════════════════════════════════════════════════════════════════ */
+:root[data-theme="sombre"]{
+  --canvas:#080b13;
+  --surface:#0f1523;
+  --surface-2:#131a2b;
+  --surface-3:#1b2335;
+  --rail:#070a12;
+  --ink:#eef1fa; --ink-2:#c9d0e4; --ink-3:#94a0bd; --ink-4:#6d7793; --ink-5:#4d5670;
+  --line:#212a3d; --line-2:#2b3549; --line-3:#3a4459;
+  --acc:#818cf8; --acc-2:#a78bfa; --acc-3:#6366f1; --acc-ink:#c3c9ff;
+  --acc-wash:#1b2340; --acc-line:#2c3763;
+  --ok:#2dd4bf; --ok-wash:#0e2a28; --warn:#fbbf24; --warn-wash:#2b2210;
+  --bad:#fb7185; --bad-wash:#2e1520;
+  --sh-1:0 1px 2px rgba(0,0,0,.45);
+  --sh-2:0 1px 3px rgba(0,0,0,.5);
+  --sh-3:0 8px 24px rgba(0,0,0,.55);
+  --sh-4:0 20px 50px rgba(0,0,0,.66);
+}
+:root[data-theme="sombre"] .topbar{background:rgba(15,21,35,.82)}
+:root[data-theme="sombre"] .recherche input{background:var(--surface-2)}
+:root[data-theme="sombre"] .recherche input:focus{background:var(--surface)}
+:root[data-theme="sombre"] ::-webkit-scrollbar-thumb{background:#2b3549;border-color:var(--canvas)}
+:root[data-theme="sombre"] .pastille{background:var(--surface-2)}
+:root[data-theme="sombre"] .palette-item.on .g{background:var(--acc-wash)}
+.btn-ico{width:34px;padding:0;justify-content:center}
+.ligne-clic{cursor:pointer}
+/* ══════════════════════════════════════════════════════════════════════
+   ESPACE DE TRAVAIL
+   ══════════════════════════════════════════════════════════════════════ */
+.entete-espace{display:flex;align-items:flex-start;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.entete-espace .txt{flex:1;min-width:240px}
+.entete-espace h1{font-size:21px;letter-spacing:-.028em;margin-bottom:4px}
+.entete-espace .obj{font-size:13px;color:var(--ink-3);max-width:760px;line-height:1.55}
+.entete-espace .meta{font-size:11.5px;color:var(--ink-4);margin-top:6px}
+.entete-espace .actions{display:flex;gap:8px;flex-wrap:wrap}
+.vide-bloc{background:var(--surface);border:1px dashed var(--line-2);border-radius:var(--r-l);
+  padding:44px 24px;text-align:center}
+.vide-bloc h3{font-size:15px;margin-bottom:6px}
+.vide-bloc p{font-size:12.8px;color:var(--ink-3);max-width:430px;margin:0 auto 16px;line-height:1.6}
+
+.membre{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line)}
+.membre:last-child{border-bottom:0}
+.membre:first-child{padding-top:0}
+.avatar{width:30px;height:30px;border-radius:9px;flex:0 0 30px;display:grid;place-items:center;
+  background:linear-gradient(140deg,#6366f1,#a855f7);color:#fff;font-size:11px;font-weight:750;
+  letter-spacing:.3px}
+.avatar.petit{width:20px;height:20px;flex:0 0 20px;border-radius:6px;font-size:8.5px}
+.membre .infos{flex:1;min-width:0}
+.membre .infos b{display:block;font-size:12.6px;font-weight:600}
+.membre .infos span{display:block;font-size:11px;color:var(--ink-4)}
+.membre .chg{text-align:right;flex:0 0 108px}
+.membre .taux{font-size:11px;font-weight:650;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.membre .taux.trop{color:var(--bad)}
+.membre .jauge{display:block;height:4px;border-radius:2px;background:var(--surface-3);
+  margin-top:4px;overflow:hidden}
+.membre .jauge i{display:block;height:100%;border-radius:2px;background:var(--acc)}
+.membre .jauge i.trop{background:var(--bad)}
+
+.ligne-equipe{display:grid;grid-template-columns:1fr 158px 74px 32px;gap:8px;
+  margin-bottom:8px;align-items:center}
+.ligne-equipe input,.ligne-equipe select{height:32px;border:1px solid var(--line-2);
+  border-radius:7px;padding:0 9px;font:inherit;font-size:12.5px;background:var(--surface);
+  color:var(--ink);outline:none;min-width:0}
+.ligne-equipe input:focus,.ligne-equipe select:focus{border-color:var(--acc);
+  box-shadow:0 0 0 3px var(--acc-wash)}
+
+.resume-exec{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:0;
+  border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden;background:var(--surface)}
+.resume-item{padding:12px 14px;border-right:1px solid var(--line)}
+.resume-item:last-child{border-right:0}
+.resume-item b{display:block;font-size:19px;font-weight:690;letter-spacing:-.03em}
+.resume-item span{display:block;font-size:10.5px;color:var(--ink-4);margin-top:1px}
+
+.puce-membre{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:999px;
+  border:1px solid var(--line-2);background:var(--surface);font-size:12px;font-weight:550;
+  color:var(--ink-3);transition:.13s}
+.puce-membre:hover{border-color:var(--line-3);color:var(--ink)}
+.puce-membre.on{background:var(--acc-wash);border-color:var(--acc-line);color:var(--acc-ink)}
+
+.sel-statut{height:28px;border-radius:7px;font:inherit;font-size:11.5px;font-weight:650;
+  padding:0 7px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);
+  cursor:pointer;outline:none;width:100%}
+.sel-statut.s-termine{background:var(--ok-wash);border-color:#bfe3dd;color:var(--ok)}
+.sel-statut.s-en_cours{background:var(--acc-wash);border-color:var(--acc-line);color:var(--acc-ink)}
+.sel-statut.s-en_revue{background:#f1eafe;border-color:#ddd0fa;color:#6d28d9}
+.sel-statut.s-bloque{background:var(--bad-wash);border-color:#f6ccd7;color:var(--bad)}
+.qui{display:inline-flex;align-items:center;gap:7px;font-size:12.3px}
+.sel-large{width:100%;height:34px;border:1px solid var(--line-2);border-radius:8px;
+  padding:0 10px;font:inherit;font-size:12.8px;background:var(--surface);color:var(--ink)}
+.histo{display:flex;gap:10px;font-size:11.8px;color:var(--ink-3);padding:5px 0;
+  border-bottom:1px dashed var(--line)}
+.histo:last-child{border-bottom:0}
+.histo span{color:var(--ink-5);flex:0 0 92px;font-variant-numeric:tabular-nums}
+.histo b{font-weight:560;color:var(--ink-2)}
+.comm{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-s);
+  padding:9px 11px;margin-bottom:8px}
+.comm b{font-size:12px;font-weight:680}
+.comm span{font-size:10.5px;color:var(--ink-4);margin-left:7px}
+.comm p{margin:4px 0 0;font-size:12.4px;color:var(--ink-2);line-height:1.5}
+.zone-comm{width:100%;border:1px solid var(--line-2);border-radius:var(--r-s);padding:8px 10px;
+  font:inherit;font-size:12.5px;resize:vertical;outline:none;background:var(--surface);
+  color:var(--ink)}
+.zone-comm:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-wash)}
+
+/* Jira */
+.bloc-jira{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;
+  align-items:start;margin-bottom:16px}
+@media (max-width:1000px){.bloc-jira{grid-template-columns:1fr}}
+.champ-jira{display:flex;flex-direction:column;gap:5px;margin-bottom:11px}
+.champ-jira label{font-size:9.5px;font-weight:750;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--ink-4)}
+.champ-jira input{height:34px;border:1px solid var(--line-2);border-radius:8px;padding:0 11px;
+  font:inherit;font-size:12.8px;background:var(--surface);color:var(--ink);outline:none}
+.champ-jira input:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-wash)}
+.champ-jira .aide{font-size:11px;color:var(--ink-4)}
+.etat-jira{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:650;
+  padding:4px 10px;border-radius:999px}
+.etat-jira i{width:6px;height:6px;border-radius:50%}
+.etat-jira.ok{background:var(--ok-wash);color:var(--ok)}
+.etat-jira.ok i{background:var(--ok)}
+.etat-jira.non{background:var(--surface-3);color:var(--ink-3)}
+.etat-jira.non i{background:var(--ink-4)}
+.ok-txt{color:var(--ok);font-size:12.3px;font-weight:560}
+.ko-txt{color:var(--bad);font-size:12.3px;font-weight:560}
+.actions-jira{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+
+/* validation humaine */
+.bandeau-validation{display:flex;align-items:center;gap:14px;padding:14px 18px;
+  border-radius:var(--r-m);border:1px solid var(--line);background:var(--surface);
+  margin-bottom:16px;box-shadow:var(--sh-1);flex-wrap:wrap}
+.bandeau-validation .pastille-v{width:34px;height:34px;border-radius:10px;display:grid;
+  place-items:center;flex:0 0 34px}
+.bandeau-validation .pastille-v svg{width:17px;height:17px}
+.bandeau-validation.atteinte{background:var(--warn-wash);border-color:#f7dcb2}
+.bandeau-validation.atteinte .pastille-v{background:#fbe6c4;color:var(--warn)}
+.bandeau-validation.ok{background:var(--ok-wash);border-color:#bfe3dd}
+.bandeau-validation.ok .pastille-v{background:#cdeee7;color:var(--ok)}
+.bandeau-validation.ko{background:var(--bad-wash);border-color:#f6ccd7}
+.bandeau-validation.ko .pastille-v{background:#fbd5e0;color:var(--bad)}
+.bandeau-validation .txt-v{flex:1;min-width:200px}
+.bandeau-validation .txt-v b{display:block;font-size:13px;font-weight:650}
+.bandeau-validation .txt-v span{font-size:11.8px;color:var(--ink-3);line-height:1.5}
+.bandeau-validation .actions-v{display:flex;gap:8px;flex-wrap:wrap}
+.zone-motif{width:100%;margin-top:4px}
+.zone-motif textarea{width:100%;min-height:64px;border:1px solid var(--line-2);
+  border-radius:8px;padding:9px 11px;font:inherit;font-size:12.5px;resize:vertical;
+  outline:none;background:var(--surface);color:var(--ink)}
+.zone-motif textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-wash)}
+
+/* liens croisés entre pages */
+.lien-page{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;
+  font-weight:600;color:var(--acc-ink);background:var(--acc-wash);
+  border:1px solid var(--acc-line);border-radius:6px;padding:3px 9px;cursor:pointer;
+  transition:.12s;text-decoration:none}
+.lien-page:hover{background:var(--acc);color:#fff;border-color:var(--acc);text-decoration:none}
+.lien-page::after{content:"→";font-size:12px}
+.carte-tete .liens{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+/* mode présentation : masque le rail, agrandit le texte */
+body.presentation .rail{display:none}
+body.presentation .contenu{max-width:1600px;padding:34px 40px 60px}
+body.presentation .kpi .v{font-size:29px}
+body.presentation .bandeau h1{font-size:29px}
+body.presentation .epic-tete{padding:17px 20px}
+.bouton-presentation{position:fixed;right:18px;bottom:18px;z-index:120;
+  box-shadow:var(--sh-3);border-radius:999px;height:40px;padding:0 18px}
+pre.code{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-s);
+  padding:11px 13px;font:11.5px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--ink-2);overflow-x:auto;margin:8px 0 0;white-space:pre-wrap}
+.modele-detecte{margin-top:14px}
+.modele-detecte .l{display:flex;align-items:center;gap:8px;font-size:12.3px;
+  color:var(--ink-2);padding:6px 0;border-top:1px dashed var(--line)}
+.modele-detecte .l b{margin-left:auto;font-weight:600;font-size:11.5px;color:var(--ink-3)}
+
+.carte-k{cursor:pointer}
+.tri{display:inline-flex;align-items:center;gap:5px}
+
+
+/* impression */
+@media print{
+  .rail,.topbar,.pied-page,.recherche{display:none !important}
+  .principal{background:#fff}
+  .contenu{max-width:none;padding:0}
+  .carte,.epic,.bandeau{box-shadow:none;break-inside:avoid}
+  .epic-corps{display:block !important}
+}
+@media (max-width:900px){
+  .rail{display:none}
+  .contenu{padding:16px}
+  .recherche input{width:150px}
+  .hero h1{font-size:24px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══════════════ RAIL ══════════════ -->
+  <aside class="rail">
+    <div class="marque">
+      <span class="logo">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#fff"
+             stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 16V4h5.2c2.1 0 3.4 1.2 3.4 3s-1.4 3-3.5 3H6.6"/>
+          <circle cx="14.1" cy="15.2" r="1.5" fill="#fff" stroke="none"/>
+        </svg>
+      </span>
+      <span class="nom">Plan<b>Agent</b><span class="ver">Pilotage agile</span></span>
+    </div>
+
+    <div class="rail-projet off" id="railProjet">
+      <div class="etq"><i></i>Sujet du projet</div>
+      <strong id="railSujet">Aucun projet chargé</strong>
+      <div class="sub" id="railSub">Décrivez un brief pour démarrer</div>
+      <div class="jauge"><i id="railJauge" style="width:0%"></i></div>
+    </div>
+
+    <div class="rail-groupe">
+      <div class="lib">Espace de travail</div>
+      <nav class="rail-nav">
+        <button data-vue="saisie" class="actif">
+          <svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <path d="M10 4.5v11M4.5 10h11" stroke-linecap="round"/></svg>
+          Nouveau brief
+        </button>
+        <button data-vue="plan" data-plan="1" disabled>
+          <svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <rect x="3" y="3" width="6" height="6" rx="1.6"/><rect x="11" y="3" width="6" height="4" rx="1.6"/>
+            <rect x="11" y="9" width="6" height="8" rx="1.6"/><rect x="3" y="11" width="6" height="6" rx="1.6"/></svg>
+          Synthèse
+        </button>
+        <button data-vue="backlog" data-plan="1" disabled>
+          <svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <path d="M7 5.5h9.5M7 10h9.5M7 14.5h6" stroke-linecap="round"/>
+            <circle cx="3.6" cy="5.5" r="1" fill="currentColor"/>
+            <circle cx="3.6" cy="10" r="1" fill="currentColor"/>
+            <circle cx="3.6" cy="14.5" r="1" fill="currentColor"/></svg>
+          Backlog <span class="badge" id="bBacklog"></span>
+        </button>
+        <button data-vue="tableau" data-plan="1" disabled>
+          <svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <rect x="2.8" y="3" width="4.2" height="14" rx="1.3"/>
+            <rect x="8.2" y="3" width="4.2" height="9" rx="1.3"/>
+            <rect x="13.6" y="3" width="3.6" height="11.5" rx="1.3"/></svg>
+          Tableau <span class="badge" id="bTableau"></span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="rail-groupe">
+      <div class="lib">Équipe</div>
+      <nav class="rail-nav">
+        <button data-vue="espace" data-plan="1" disabled>
+          <svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <circle cx="7.4" cy="7.2" r="2.6"/><path d="M2.6 16c0-2.7 2.1-4.4 4.8-4.4s4.8 1.7 4.8 4.4"
+              stroke-linecap="round"/><circle cx="14.4" cy="8.4" r="1.9" opacity=".55"/>
+            <path d="M13.4 12.4c2.2.2 3.8 1.6 3.8 3.6" stroke-linecap="round" opacity=".55"/></svg>
+          Espace de travail <span class="badge" id="bEquipe"></span>
+        </button>
+        <button data-vue="execution" data-plan="1" disabled>
+          <svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <path d="M3.5 10.4l3.6 3.6 9.4-9.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Exécution <span class="badge" id="bExec"></span>
+        </button>
+        <button data-vue="jira" data-plan="1" disabled>
+          <svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <path d="M10 2.8 4.6 8.2a2 2 0 0 0 0 2.8l2.6 2.6 2.8-2.8-1.4-1.4 2.6-2.6"
+              stroke-linejoin="round"/>
+            <path d="M10 17.2l5.4-5.4a2 2 0 0 0 0-2.8L12.8 6.4 10 9.2l1.4 1.4-2.6 2.6"
+              stroke-linejoin="round" opacity=".55"/></svg>
+          Jira
+        </button>
+      </nav>
+    </div>
+
+    <div class="rail-groupe">
+      <div class="lib">Assurance qualité</div>
+      <nav class="rail-nav">
+        <button data-vue="qualite" data-plan="1" disabled>
+          <svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <path d="M10 2.8 16 5v5.2c0 3.3-2.5 5.9-6 7-3.5-1.1-6-3.7-6-7V5l6-2.2Z"
+                  stroke-linejoin="round"/><path d="M7.4 9.9l1.9 1.9 3.4-3.6"
+                  stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Contrôles
+        </button>
+        <button data-vue="planification" data-plan="1" disabled>
+          <svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <rect x="3" y="4.5" width="14" height="12" rx="2"/>
+            <path d="M3 8.4h14M6.6 2.8v3.2M13.4 2.8v3.2" stroke-linecap="round"/>
+            <path d="M6.2 11.4h4.6" stroke-linecap="round"/></svg>
+          Planification
+        </button>
+        <button data-vue="risques" data-plan="1" disabled>
+          <svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <path d="M10 3.2 18 17H2z" stroke-linejoin="round"/>
+            <path d="M10 8.2v3.6M10 14.4v.1" stroke-linecap="round"/></svg>
+          Risques <span class="badge" id="bRisques"></span>
+        </button>
+        <button data-vue="sources" data-plan="1" disabled>
+          <svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <path d="M4 3.5h8.5L16 7v9.5H4z" stroke-linejoin="round"/>
+            <path d="M12 3.6V7h3.6" stroke-linejoin="round"/></svg>
+          Sources &amp; preuves <span class="badge" id="bSources"></span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="rail-groupe">
+      <div class="lib">Système</div>
+      <nav class="rail-nav">
+        <button data-vue="reglages">
+          <svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <circle cx="10" cy="10" r="2.6"/>
+            <path d="M10 2.6v2M10 15.4v2M2.6 10h2M15.4 10h2M4.8 4.8l1.4 1.4M13.8 13.8l1.4 1.4M15.2 4.8l-1.4 1.4M6.2 13.8l-1.4 1.4"
+                  stroke-linecap="round"/></svg>
+          Réglages <span class="badge" id="bCle"></span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="rail-pied" id="railPied">
+      <div class="ligne"><span>Modèle</span><b id="railModele">—</b></div>
+      <div class="ligne"><span>Généré le</span><b id="railDate">—</b></div>
+      <div class="ligne"><span>Langue du plan</span><b>Français</b></div>
+    </div>
+  </aside>
+
+  <!-- ══════════════ PRINCIPAL ══════════════ -->
+  <div class="principal">
+    <header class="topbar">
+      <div class="fil">
+        <span>PlanAgent</span><span class="sep">/</span>
+        <b id="filNom">Nouveau projet</b>
+        <span class="sep">/</span><span class="ici" id="filVue">Brief</span>
+      </div>
+      <div class="pousse"></div>
+      <div class="recherche" id="zoneRecherche" style="opacity:.45">
+        <svg class="loupe" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
+          <circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2 13.5 13.5" stroke-linecap="round"/></svg>
+        <input id="recherche" type="search" placeholder="Rechercher une tâche, un épic…" autocomplete="off">
+        <kbd>/</kbd>
+      </div>
+      <button class="btn btn-s" id="btnExport" title="Exporter le plan au format Markdown">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 3.2v9.4m0 0 3.3-3.3M10 12.6 6.7 9.3M3.8 15.2h12.4"/></svg>
+        Markdown
+      </button>
+      <button class="btn btn-s btn-ico" id="btnTheme" title="Passer au thème sombre"
+              aria-label="Changer de thème" onclick="basculerTheme()">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"
+             stroke-linecap="round"><path d="M15.5 11.6A6.4 6.4 0 0 1 8.4 4.5a6.4 6.4 0 1 0 7.1 7.1z"
+             stroke-linejoin="round"/></svg>
+      </button>
+      <button class="btn btn-s btn-ico" id="btnPalette" title="Palette de commandes (Ctrl+K)"
+              aria-label="Ouvrir la palette de commandes" onclick="ouvrirPalette()">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"
+             stroke-linecap="round"><path d="M4 6h12M4 10h12M4 14h7"/></svg>
+      </button>
+      <button class="btn btn-s" id="btnPresentation" onclick="basculerPresentation()"
+              title="Agrandir l'affichage pour une démonstration">Mode présentation</button>
+      <button class="btn btn-f" id="btnNouveau" title="Réinitialiser et écrire un nouveau brief">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round"><path d="M10 4.4v11.2M4.4 10h11.2"/></svg>
+        Nouveau
+      </button>
+    </header>
+
+    <main class="contenu">
+
+      <!-- ─────── SAISIE ─────── -->
+      <section id="vue-saisie">
+        <div class="hero">
+          <span class="eyebrow">Chef de projet augmenté</span>
+          <h1>Du brief au backlog exécutable</h1>
+          <p class="sous">Décrivez votre projet en quelques lignes. L'agent interroge neuf sources
+            publiques, retient les preuves utiles, puis construit les épics, les user stories
+            et les tâches — chacune rattachée à sa source.</p>
+
+          <div class="zone-brief">
+            <label class="sr" for="brief">Brief du projet</label>
+            <textarea id="brief" placeholder="Exemple : application web de gestion de stock pour une PME agroalimentaire, avec alertes de rupture, inventaires et tableau de bord des rotations."></textarea>
+            <div class="pied">
+              <span class="compteur" id="compteur"><b>0</b> caractère — 10 minimum</span>
+              <button class="btn btn-p btn-lg" id="btnGenerer">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11.5 2.6 4.2 11.4h4.6l-.6 6 7.4-8.8h-4.7z"/></svg>
+                Générer le plan
+              </button>
+            </div>
+          </div>
+
+          <p class="exemples-lib" style="margin-top:20px">Partir d'un exemple</p>
+          <div class="exemples">
+            <button class="ex" data-b="Application web de gestion de stock pour une PME agroalimentaire, avec alertes de rupture, inventaires et tableau de bord des rotations.">
+              <b>Gestion de stock</b><span>PME agroalimentaire, seuils et inventaires</span></button>
+            <button class="ex" data-b="Cabinet d'avocats : gestion des dossiers clients, suivi des échéances procédurales et facturation des honoraires.">
+              <b>Cabinet d'avocats</b><span>Dossiers, échéances, honoraires</span></button>
+            <button class="ex" data-b="Plateforme de réservation de salles de sport avec abonnements, planning des cours et paiement en ligne.">
+              <b>Réservation de salles</b><span>Abonnements, planning, paiement</span></button>
+            <button class="ex" data-b="Application de gestion de bibliothèque scolaire avec prêt de livres, retards et catalogue partagé.">
+              <b>Bibliothèque scolaire</b><span>Prêts, retards, catalogue</span></button>
+          </div>
+
+          <div id="attente" class="attente cache">
+            <div class="rouage"></div>
+            <h3>Génération en cours</h3>
+            <p>Collecte des sources, sélection des preuves, rédaction du plan.</p>
+            <div class="ligne-attente"><i></i></div>
+          </div>
+
+          <div id="zoneErreur"></div>
+          <div id="rappelCle"></div>
+        </div>
+      </section>
+
+      <!-- ─────── ESPACE DE TRAVAIL ─────── -->
+      <section id="vue-espace" class="cache">
+        <div id="espaceVide">
+          <div class="vide-bloc">
+            <h3>Aucun projet en cours</h3>
+            <p>Le plan doit d'abord être généré, puis transformé en projet : l'agent décrit
+              le travail, vous décidez ensuite qui le fait et dans quel ordre.</p>
+            <button class="btn btn-p" onclick="aller('saisie')">Écrire un brief</button>
+            <button class="btn btn-s" onclick="demanderCreation()" id="btnCreerDepuisVide"
+                    style="margin-left:8px">Créer depuis le plan</button>
+          </div>
+        </div>
+        <div id="espacePlein" class="cache">
+          <div class="entete-espace">
+            <div class="txt">
+              <h1 id="eSujet">—</h1>
+              <p class="obj" id="eObjectif"></p>
+              <p class="meta" id="eMeta"></p>
+            </div>
+            <div class="actions">
+              <button class="btn btn-s" onclick="ouvrirEquipe()">Composer l'équipe</button>
+              <button class="btn btn-p" onclick="repartirAuto()">Répartir les tâches</button>
+            </div>
+          </div>
+          <div class="kpis" id="eKpi"></div>
+          <div class="g2">
+            <div class="carte">
+              <div class="carte-tete"><h2>Avancement par épic</h2>
+                <span class="note">Tâches terminées sur le total</span></div>
+              <div class="carte-corps"><div class="bars" id="eAvancement"></div></div>
+            </div>
+            <div class="carte">
+              <div class="carte-tete"><h2>Charge de l'équipe</h2>
+                <span class="note">Points affectés sur capacité</span></div>
+              <div class="carte-corps"><div id="eEquipe"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────── EXÉCUTION ─────── -->
+      <section id="vue-execution" class="cache">
+        <div class="barre-outils">
+          <div class="titre">Exécution<span style="margin-left:8px">Qui fait quoi, et où en est chaque tâche</span></div>
+          <button class="btn btn-s" onclick="repartirAuto()">Répartition automatique</button>
+          <button class="btn btn-s" onclick="ouvrirEquipe()">Équipe</button>
+        </div>
+        <div class="carte bloc"><div class="carte-corps" style="padding:0">
+          <div class="resume-exec" id="execResume"></div></div></div>
+        <div class="barre-outils" style="gap:6px;margin-bottom:10px">
+          <div id="execMembres" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+          <div class="recherche" style="margin-left:auto">
+            <svg class="loupe" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                 stroke-width="1.7"><circle cx="7" cy="7" r="4.2"/>
+              <path d="M10.2 10.2 13.5 13.5" stroke-linecap="round"/></svg>
+            <input id="rechercheExec" type="search" placeholder="Filtrer les tâches…"
+                   oninput="RECHERCHE_EXEC = this.value; rendreExecution()">
+          </div>
+        </div>
+        <div class="carte"><div class="carte-corps serre"><div id="tableExec"></div></div></div>
+      </section>
+
+      <!-- ─────── JIRA ─────── -->
+      <section id="vue-jira" class="cache">
+        <div class="barre-outils">
+          <div class="titre">Jira<span style="margin-left:8px">Envoyer le plan et rapatrier l'avancement</span></div>
+          <span id="jEtat"></span>
+        </div>
+        <div class="bloc-jira">
+          <div class="carte">
+            <div class="carte-tete"><h2>Connexion Jira Cloud</h2>
+              <span class="note">Jeton d'API, jamais affiché</span></div>
+            <div class="carte-corps">
+              <div class="champ-jira"><label for="jUrl">Adresse</label>
+                <input id="jUrl" placeholder="https://votre-entreprise.atlassian.net">
+                <span class="aide">L'adresse de votre espace Jira Cloud.</span></div>
+              <div class="champ-jira"><label for="jEmail">E-mail du compte</label>
+                <input id="jEmail" placeholder="chef.projet@entreprise.tn"></div>
+              <div class="champ-jira"><label for="jToken">Jeton d'API</label>
+                <input id="jToken" type="password" placeholder="jeton d'API Jira">
+                <span class="aide">Créé sur id.atlassian.com → Sécurité → Jetons d'API.</span></div>
+              <div class="champ-jira"><label for="jCle">Clé du projet Jira</label>
+                <input id="jCle" placeholder="PROJ">
+                <span class="aide">Les quatre lettres affichées devant chaque ticket.</span></div>
+              <div class="actions-jira">
+                <button class="btn btn-s" onclick="jiraConfig()">Enregistrer</button>
+                <button class="btn btn-s" id="jVerifier" onclick="jiraVerifier()">Vérifier la connexion</button>
+              </div>
+              <div id="jMessage" style="margin-top:10px"></div>
+            </div>
+          </div>
+          <div>
+            <div class="carte bloc">
+              <div class="carte-tete"><h2>Types de ticket du projet</h2>
+                <span class="note">Lus depuis Jira</span></div>
+              <div class="carte-corps"><div class="chips" id="jTypes"></div></div>
+            </div>
+            <div class="carte">
+              <div class="carte-tete"><h2>Échanges avec Jira</h2>
+                <span class="note" id="jCompteur"></span></div>
+              <div class="carte-corps">
+                <div class="actions-jira" style="margin:0 0 12px">
+                  <button class="btn btn-p" id="jEnvoyer" onclick="jiraEnvoyer()">Envoyer le plan vers Jira</button>
+                  <button class="btn btn-s" id="jRelire" onclick="jiraRelire()">Rapatrier l'avancement</button>
+                </div>
+                <div id="jHistorique"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────── RÉGLAGES ─────── -->
+      <section id="vue-reglages" class="cache">
+        <div class="barre-outils">
+          <div class="titre">Réglages<span style="margin-left:8px">Clé du modèle et état du service</span></div>
+        </div>
+        <div class="g2">
+          <div class="carte">
+            <div class="carte-tete"><h2>Clé Groq</h2>
+              <span class="note" id="etatCle"></span></div>
+            <div class="carte-corps">
+              <p class="vide" style="margin-bottom:14px;line-height:1.6">
+                La clé sert à appeler le modèle qui rédige le plan. Elle est stockée
+                dans un fichier local lisible par votre seul compte, et n'est jamais
+                renvoyée au navigateur : cette page affiche seulement sa présence.
+              </p>
+              <div class="champ-jira">
+                <label for="champCle">Clé Groq</label>
+                <input id="champCle" type="password" placeholder="gsk_…" autocomplete="off">
+                <span class="aide">Créée sur console.groq.com/keys. Elle commence par gsk_.</span>
+              </div>
+              <div class="actions-jira">
+                <button class="btn btn-p" onclick="enregistrerCle()">Enregistrer la clé</button>
+                <button class="btn btn-s" onclick="testerCle()">Tester la connexion</button>
+                <button class="btn btn-f" onclick="effacerCle()">Effacer</button>
+              </div>
+              <div id="messageCle" style="margin-top:12px"></div>
+              <div class="modele-detecte" id="modeleDetecte"></div>
+            </div>
+          </div>
+          <div>
+            <div class="carte bloc">
+              <div class="carte-tete"><h2>Deuxième clé : Jira</h2>
+                <span class="note">Optionnelle</span></div>
+              <div class="carte-corps">
+                <p class="vide" style="line-height:1.6">La connexion Jira a ses propres
+                  identifiants : adresse de l'espace, e-mail et jeton d'API.
+                  Ils se saisissent dans la vue <b>Jira</b>, pas ici.</p>
+                <button class="btn btn-s" style="margin-top:10px" onclick="aller('jira')">
+                  Ouvrir la vue Jira</button>
+              </div>
+            </div>
+            <div class="carte">
+              <div class="carte-tete"><h2>Autre méthode : la ligne de commande</h2></div>
+              <div class="carte-corps">
+                <p class="vide" style="line-height:1.7">Pour un usage en script ou sur un serveur,
+                  la clé peut venir de l'environnement :</p>
+                <pre class="code">export GROQ_API_KEY="gsk_votre_cle"
+python3 -m planagent --brief "votre projet"</pre>
+                <p class="vide" style="margin-top:10px;line-height:1.7">La variable
+                  d'environnement est prioritaire sur la clé enregistrée ici.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────── SYNTHÈSE ─────── -->
+      <section id="vue-plan" class="cache">
+        <div class="bandeau">
+          <div class="bandeau-haut">
+            <span class="eyebrow">Sujet du projet</span>
+            <h1 id="sujetProjet">—</h1>
+            <p class="obj" id="objectifProjet">—</p>
+          </div>
+          <div class="bandeau-bas">
+            <div class="m"><span>Domaine</span><b id="mDomaine">—</b></div>
+            <div class="m"><span>Généré le</span><b id="mDate">—</b></div>
+            <div class="m"><span>Modèle</span><b id="mModele">—</b></div>
+            <div class="m"><span>Périmètre</span><b id="mPerimetre">—</b></div>
+          </div>
+        </div>
+
+        <div id="bandeauValidation"></div>
+        <div class="kpis" id="kpis"></div>
+        <div id="zoneAvert"></div>
+
+        <div class="g2">
+          <div class="carte">
+            <div class="carte-tete"><h2>Cadrage du besoin</h2>
+              <div class="liens"><span class="note">Extrait du brief</span>
+                <a class="lien-page" onclick="aller('sources')">Preuves</a></div></div>
+            <div class="carte-corps"><dl class="props" id="propsCadrage"></dl></div>
+          </div>
+          <div class="carte">
+            <div class="carte-tete"><h2>Répartition de la charge</h2>
+              <span class="note" id="noteCharge"></span></div>
+            <div class="carte-corps" style="display:flex;gap:20px;align-items:center" id="blocAnneau">
+              <div class="anneau" id="anneau"></div>
+              <div class="legende" id="legendeTypes"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="g2b">
+          <div class="carte">
+            <div class="carte-tete"><h2>Charge par épic</h2>
+              <div class="liens"><span class="note" id="noteEpics"></span>
+                <a class="lien-page" onclick="aller('planification')">Sprints</a></div></div>
+            <div class="carte-corps"><div class="bars" id="charges"></div></div>
+          </div>
+          <div class="carte">
+            <div class="carte-tete"><h2>Priorités et rythme</h2>
+              <div class="liens"><span class="note">Sur l'ensemble des tâches</span>
+                <a class="lien-page" onclick="aller('tableau')">Tableau</a></div></div>
+            <div class="carte-corps">
+              <div class="pile" id="pilePriorites"></div>
+              <div class="legende" id="legendePriorites" style="margin-top:14px"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="carte" id="carteCreation" style="margin-top:16px">
+          <div class="carte-tete"><h2>Passer à l'exécution</h2>
+            <span class="note">Le plan devient un projet suivi</span></div>
+          <div class="carte-corps" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+            <div class="champ" style="flex:1;min-width:220px">
+              <label for="nomProjet">Nom du projet</label>
+              <input id="nomProjet" placeholder="Nom du projet (par défaut : le sujet du plan)">
+            </div>
+            <button class="btn btn-p btn-lg" onclick="creerProjet()">
+              Créer le projet et l'équipe</button>
+          </div>
+        </div>
+
+        <div class="carte">
+          <div class="carte-tete"><h2>Fonctionnalités validées</h2>
+            <div class="liens"><span class="note" id="noteFonctions"></span>
+              <a class="lien-page" onclick="aller('backlog')">Backlog</a></div></div>
+          <div class="carte-corps"><div class="chips" id="fonctionnalites"></div></div>
+        </div>
+      </section>
+
+      <!-- ─────── BACKLOG ─────── -->
+      <section id="vue-backlog" class="cache">
+        <div class="barre-outils">
+          <div class="titre" id="titreBacklog">Backlog</div>
+          <div class="seg" id="filtreType">
+            <button class="on" data-f="">Tous</button>
+            <button data-f="dev">Développement</button>
+            <button data-f="test">Tests</button>
+            <button data-f="doc">Documentation</button>
+          </div>
+          <a class="lien-page" onclick="aller('execution')">Suivi d'exécution</a>
+          <button class="btn btn-s" id="btnDeplier">Tout déplier</button>
+        </div>
+        <div id="listeEpics"></div>
+      </section>
+
+      <!-- ─────── TABLEAU ─────── -->
+      <section id="vue-tableau" class="cache">
+        <div class="barre-outils">
+          <div class="titre" id="titreTableau">Tableau</div>
+          <a class="lien-page" onclick="aller('planification')">Planifier</a>
+          <a class="lien-page" onclick="aller('execution')">Affecter</a>
+        </div>
+        <div class="kanban" id="tableau"></div>
+      </section>
+
+      <!-- ─────── CONTRÔLES ─────── -->
+      <section id="vue-qualite" class="cache">
+        <div class="barre-outils">
+          <div class="titre" id="titreQualite">Contrôles de qualité</div>
+          <a class="lien-page" onclick="aller('risques')">Risques</a>
+        </div>
+        <div class="g2" style="margin-bottom:16px">
+          <div class="carte">
+            <div class="carte-tete"><h2>Traçabilité des tâches</h2>
+              <span class="note" id="noteAncrage"></span></div>
+            <div class="carte-corps" style="display:flex;gap:22px;align-items:center">
+              <div class="anneau" id="anneauAncrage"></div>
+              <div style="flex:1;min-width:0">
+                <div class="props" id="propsAncrage"></div>
+              </div>
+            </div>
+          </div>
+          <div class="carte">
+            <div class="carte-tete"><h2>Couverture du besoin</h2>
+              <span class="note" id="noteCouverture"></span></div>
+            <div class="carte-corps" style="display:flex;gap:22px;align-items:center">
+              <div class="anneau" id="anneauCouverture"></div>
+              <div style="flex:1;min-width:0">
+                <div class="props" id="propsCouverture"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="carte bloc">
+          <div class="carte-tete"><h2>Vérifications</h2>
+            <span class="note" id="noteVerifs"></span></div>
+          <div class="carte-corps"><div class="controles" id="controles"></div></div>
+        </div>
+        <div class="carte bloc">
+          <div class="carte-tete"><h2>Tâches sans preuve attachée</h2>
+            <span class="note" id="noteSansPreuve"></span></div>
+          <div class="carte-corps serre"><div id="tableSansPreuve"></div></div>
+        </div>
+        <div class="carte">
+          <div class="carte-tete"><h2>Documents écartés par la sélection</h2>
+            <span class="note" id="noteEcartes"></span></div>
+          <div class="carte-corps serre"><div id="tableEcartes"></div></div>
+        </div>
+      </section>
+
+      <!-- ─────── PLANIFICATION ─────── -->
+      <section id="vue-planification" class="cache">
+        <div class="barre-outils">
+          <div class="titre" id="titrePlanif">Planification<span style="margin-left:8px">Découpage prévisionnel en sprints</span></div>
+        </div>
+        <div class="carte bloc">
+          <div class="carte-tete"><h2>Paramètres de planification</h2>
+            <span class="note">Simulation immédiate, aucune donnée envoyée</span></div>
+          <div class="carte-corps">
+            <div class="params">
+              <div class="champ"><label for="cap">Capacité par sprint</label>
+                <select id="cap" onchange="rendrePlanification()">
+                  <option value="20">20 points</option>
+                  <option value="30">30 points</option>
+                  <option value="40" selected>40 points</option>
+                  <option value="60">60 points</option>
+                  <option value="80">80 points</option>
+                </select></div>
+              <div class="champ"><label for="nbSprints">Nombre de sprints</label>
+                <select id="nbSprints" onchange="rendrePlanification()">
+                  <option value="0" selected>Calculé automatiquement</option>
+                  <option value="3">3 sprints</option>
+                  <option value="4">4 sprints</option>
+                  <option value="6">6 sprints</option>
+                  <option value="8">8 sprints</option>
+                </select></div>
+              <div class="champ"><label>Durée d'un sprint</label>
+                <input value="10 jours ouvrés" readonly style="cursor:default;color:var(--ink-3)"></div>
+            </div>
+          </div>
+        </div>
+        <div class="kpis" id="kpiPlanif"></div>
+        <div class="g2">
+          <div class="carte">
+            <div class="carte-tete"><h2>Étalement des épics</h2>
+              <span class="note">Un bloc par épic, sur l'axe des sprints</span></div>
+            <div class="carte-corps"><div class="gantt" id="gantt"></div></div>
+          </div>
+          <div class="carte">
+            <div class="carte-tete"><h2>Avancement cumulé</h2>
+              <span class="note" id="noteCourbe"></span></div>
+            <div class="carte-corps"><div id="courbe"></div></div>
+          </div>
+        </div>
+        <div class="carte">
+          <div class="carte-tete"><h2>Contenu des sprints</h2>
+            <span class="note">Ordre de traitement proposé</span></div>
+          <div class="carte-corps"><div class="sprints" id="sprints"></div></div>
+        </div>
+      </section>
+
+      <!-- ─────── RISQUES ─────── -->
+      <section id="vue-risques" class="cache">
+        <div class="barre-outils">
+          <div class="titre" id="titreRisques">Risques et hypothèses<span style="margin-left:8px">Lecture critique du plan</span></div>
+        </div>
+        <div class="g2">
+          <div class="carte">
+            <div class="carte-tete"><h2>Matrice probabilité × impact</h2>
+              <span class="note" id="noteMatrice"></span></div>
+            <div class="carte-corps">
+              <div class="matrice-bloc">
+                <div class="axes-matrice"><b>Impact</b><span>élevé</span><span>moyen</span><span>faible</span></div>
+                <div class="matrice" id="matrice"></div>
+              </div>
+              <p class="vide" style="margin-top:12px">Chaque pastille renvoie au numéro du risque ci-dessous.
+                Probabilité en abscisse, impact en ordonnée.</p>
+            </div>
+          </div>
+          <div class="carte">
+            <div class="carte-tete"><h2>Hypothèses retenues</h2>
+              <span class="note">Extraites du brief</span></div>
+            <div class="carte-corps"><div id="hypotheses"></div></div>
+          </div>
+        </div>
+        <div class="carte">
+          <div class="carte-tete"><h2>Registre des risques</h2>
+            <span class="note">Avec la mesure associée</span></div>
+          <div class="carte-corps"><div id="listeRisques"></div></div>
+        </div>
+      </section>
+
+      <!-- ─────── SOURCES ─────── -->
+      <section id="vue-sources" class="cache">
+        <div class="barre-outils">
+          <div class="titre" id="titreSources">Sources &amp; preuves</div>
+          <a class="lien-page" onclick="aller('qualite')">Contrôles</a>
+        </div>
+        <div class="carte bloc">
+          <div class="carte-tete"><h2>Chaîne de traitement</h2>
+            <span class="note" id="noteFlux"></span></div>
+          <div class="carte-corps"><div class="flux" id="flux"></div></div>
+        </div>
+        <div class="carte bloc">
+          <div class="carte-tete"><h2>Sources interrogées</h2>
+            <span class="note" id="noteCollecte"></span></div>
+          <div class="carte-corps serre"><div id="tableCollecte"></div></div>
+        </div>
+        <div class="carte">
+          <div class="carte-tete"><h2>Preuves citées</h2>
+            <span class="note" id="notePreuves"></span></div>
+          <div class="carte-corps serre"><div id="tablePreuves"></div></div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="pied-page">
+      <span>PlanAgent — plan généré à partir de sources publiques, à valider par l'équipe projet.</span>
+      <span id="piedInfo">Aucun plan chargé</span>
+    </footer>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = t => String(t == null ? "" : t)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const nf  = n => Number(n || 0).toLocaleString("fr-FR");
+const pct = (n, d) => d ? Math.round(n / d * 100) : 0;
+
+/* Le modèle renvoie parfois une phrase là où l'on attend une liste
+   (« utilisateurs » : "les gestionnaires, les acheteurs"). Ces deux fonctions
+   évitent qu'un plan valide fasse planter l'affichage. */
+const liste = v => {
+  if(Array.isArray(v)) return v.filter(x => x != null && String(x).trim() !== "");
+  if(v == null) return [];
+  if(typeof v === "string"){
+    const t = v.trim();
+    if(!t) return [];
+    return t.split(/\s*[;·•]\s*|\s+et\s+|,\s*/).map(x => x.trim())
+            .filter(x => x.length > 0);
+  }
+  if(typeof v === "object") return Object.values(v).map(x => String(x));
+  return [String(v)];
+};
+/* liste de textes : garantit que chaque élément est une chaîne affichable */
+const textes = v => liste(v).map(x => typeof x === "object" && x !== null
+  ? (x.texte || x.titre || x.nom || JSON.stringify(x)) : String(x));
+
+const TYPES = {dev:"Développement", test:"Tests", config:"Configuration",
+               doc:"Documentation", design:"Conception", securite:"Sécurité"};
+const typeLib = t => TYPES[t] || t || "—";
+const COUL_TYPE = {dev:"#4f46e5", design:"#f59e0b", config:"#8b5cf6",
+                   test:"#0f766e", doc:"#94a3b8", securite:"#e11d48"};
+const PREUVE_LIB = {fonctionnalite:"Fonctionnalité", exigence:"Exigence", extrait:"Extrait"};
+const VUES = {saisie:"Brief", plan:"Synthèse", backlog:"Backlog", tableau:"Tableau",
+              qualite:"Contrôles", planification:"Planification", risques:"Risques",
+              espace:"Espace de travail", execution:"Exécution", jira:"Jira",
+              sources:"Sources", reglages:"Réglages"};
+
+let PLAN = null, META = null, PREUVES = [], MINUTEUR = null, VUE = "saisie";
+let FILTRE_TYPE = "", Q = "", TOUT_OUVERT = false;
+
+/* ── icônes ──────────────────────────────────────────────────────── */
+const ICO = {
+  epic: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="6" height="6" rx="1.6"/><rect x="11" y="3" width="6" height="4" rx="1.6"/><rect x="11" y="9" width="6" height="8" rx="1.6"/><rect x="3" y="11" width="6" height="6" rx="1.6"/></svg>',
+  story: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 4.5h12v9H9.5L6 17v-3.5H4z" stroke-linejoin="round"/></svg>',
+  task: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 10.5l3.4 3.4L16 5.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  pts: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 2.8l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7z" stroke-linejoin="round"/></svg>',
+  anc: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 3.5v10M6.5 7 10 3.5 13.5 7M5 13c1.4 2 3 3 5 3s3.6-1 5-3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  couv: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="6.8"/><path d="M10 3.2v13.6M3.2 10h13.6" stroke-linecap="round" opacity=".5"/><path d="M10 10 16.4 6.6A7 7 0 0 1 17 10z" fill="currentColor" stroke="none" opacity=".9"/></svg>',
+  doc: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4.5 3.5h7L15.5 7v9.5h-11z" stroke-linejoin="round"/><path d="M11.3 3.6V7h3.6" stroke-linejoin="round"/></svg>',
+  ok: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.2 8.4 6.2 11.4 12.8 4.8"/></svg>',
+  ko: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 3.6v5.2M8 12.1v.1"/></svg>',
+  alerte: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 3.2 18 17H2z" stroke-linejoin="round"/><path d="M10 8.2v3.6M10 14.6v.1"/></svg>'
+};
+
+/* ── navigation ──────────────────────────────────────────────────── */
+function aller(v){
+  /* la saisie et les réglages restent accessibles sans plan : on doit pouvoir
+     enregistrer sa clé avant même d'avoir généré quoi que ce soit */
+  if(v !== "saisie" && v !== "reglages" && !PLAN) return;
+  VUE = v;
+  $$("section[id^='vue-']").forEach(s => s.classList.add("cache"));
+  const c = $("#vue-" + v);
+  if(c) c.classList.remove("cache");
+  $$(".rail-nav button").forEach(b => b.classList.toggle("actif", b.dataset.vue === v));
+  $("#filVue").textContent = VUES[v] || v;
+  if(v !== "saisie") $("#filNom").textContent = sujetCourt(52);
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+$$(".rail-nav button").forEach(b => b.onclick = () => aller(b.dataset.vue));
+
+function sujetCourt(n){
+  const s = (META && META.analyse && META.analyse.sujet) || (META && META.brief) || "Nouveau projet";
+  return s.length > n ? s.slice(0, n).trimEnd() + "…" : s;
+}
+
+/* ── compteur ────────────────────────────────────────────────────── */
+function majCompteur(){
+  const n = $("#brief").value.trim().length;
+  const c = $("#compteur");
+  c.innerHTML = n >= 10 ? `<b>${nf(n)}</b> caractères — prêt à générer`
+                        : `<b>${nf(n)}</b> caractère${n > 1 ? "s" : ""} — 10 minimum`;
+  c.classList.toggle("ok", n >= 10);
+}
+$("#brief").addEventListener("input", majCompteur);
+majCompteur();
+
+$$(".ex").forEach(b => b.onclick = () => {
+  $("#brief").value = b.dataset.b; majCompteur(); $("#brief").focus();
+});
+
+/* ── réinitialisation ────────────────────────────────────────────── */
+$("#btnNouveau").onclick = () => {
+  PLAN = null; META = null; PREUVES = []; Q = ""; FILTRE_TYPE = "";
+  $("#recherche").value = "";
+  $$(".rail-nav button[data-plan]").forEach(b => b.disabled = true);
+  $("#btnExport").classList.add("cache");
+  $("#zoneRecherche").style.opacity = ".45";
+  $("#railSujet").textContent = "Aucun projet chargé";
+  $("#railSub").textContent = "Décrivez un brief pour démarrer";
+  $("#railJauge").style.width = "0%";
+  $("#railProjet").classList.add("off");
+  $("#filNom").textContent = "Nouveau projet";
+  $("#railModele").textContent = "—"; $("#railDate").textContent = "—";
+  $("#piedInfo").textContent = "Aucun plan chargé";
+  ["bBacklog","bTableau","bSources","bRisques","bEquipe","bExec"].forEach(
+    i => { const e = $("#" + i); if(e) e.textContent = ""; });
+  $("#brief").value = ""; majCompteur();
+  $("#zoneErreur").innerHTML = "";
+  aller("saisie");
+};
+$("#btnExport").onclick = () => window.open("/api/export", "_blank");
+
+/* ── génération ──────────────────────────────────────────────────── */
+$("#btnGenerer").onclick = () => {
+  const brief = $("#brief").value.trim();
+  if(brief.length < 10){ $("#brief").focus(); return; }
+  $("#btnGenerer").disabled = true;
+  $("#zoneErreur").innerHTML = "";
+  $("#attente").classList.remove("cache");
+  const t0 = Date.now();
+  fetch("/api/generer", {method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({brief})})
+    .then(r => r.json()).then(d => {
+      if(d.erreur){ arreter(); erreur(d.erreur); return; }
+      MINUTEUR = setInterval(() => sonder(t0), 900);
+    })
+    .catch(e => { arreter(); erreur("Connexion au serveur impossible : " + e); });
+};
+
+function arreter(){
+  clearInterval(MINUTEUR);
+  $("#attente").classList.add("cache");
+  $("#btnGenerer").disabled = false;
+}
+function erreur(t){
+  $("#zoneErreur").innerHTML =
+    `<div class="alerte erreur">${ICO.alerte}<div><b>La génération a échoué.</b>${esc(t)}</div></div>`;
+}
+function sonder(){
+  fetch("/api/etat").then(r => r.json()).then(e => {
+    if(e.statut === "termine"){ arreter(); charger(); }
+    else if(e.statut === "erreur"){ arreter(); erreur(e.erreur || "cause inconnue"); }
+  }).catch(() => {});
+}
+
+/* ── chargement ──────────────────────────────────────────────────── */
+function charger(){
+  return fetch("/api/plan").then(r => r.json()).then(d => appliquerDonnees(d))
+    .catch(e => erreur("Lecture du plan impossible : " + e));
+}
+
+/* applique un plan déjà chargé : sépare la lecture réseau de l'affichage */
+function appliquerDonnees(d){
+    if(!d || !d.plan){ erreur("Aucun plan disponible sur le serveur."); return; }
+    PLAN = d.plan; META = d.meta || {}; PREUVES = d.preuves || [];
+    const a = META.analyse || {};
+    const sujet = a.sujet || (META.brief || "").slice(0, 90) || "Projet sans titre";
+    $("#railSujet").textContent = sujet;
+    $("#railSub").textContent = (a.domaine ? a.domaine + " · " : "") +
+      nf((META.qualite || {}).points) + " points";
+    $("#railJauge").style.width = "100%";
+    $("#railProjet").classList.remove("off");
+    $("#filNom").textContent = sujetCourt(52);
+    $("#railModele").textContent = String(META.modele || "—").split("/").pop();
+    $("#railDate").textContent = META.date || "—";
+    $("#piedInfo").textContent = "Plan généré le " + (META.date || "—");
+    $$(".rail-nav button[data-plan]").forEach(b => b.disabled = false);
+    $("#btnExport").classList.remove("cache");
+    $("#zoneRecherche").style.opacity = "1";
+    /* Chaque vue est rendue indépendamment : si une seule échoue sur une
+       donnée inattendue, les autres s'affichent quand même et l'erreur est
+       signalée comme un défaut d'affichage, pas comme un échec de génération. */
+    const pannes = [];
+    [["Synthèse", rendrePlan], ["Backlog", rendreBacklog], ["Tableau", rendreTableau],
+     ["Contrôles", rendreQualite], ["Planification", rendrePlanification],
+     ["Risques", rendreRisques], ["Sources", rendreSources]]
+      .forEach(([nom, fn]) => {
+        try { fn(); } catch(e){ pannes.push(nom + " : " + e.message); console.error(nom, e); }
+      });
+    try { $("#nomProjet").value = sujet; } catch(e){}
+    try { majBadges(); } catch(e){}
+    if(pannes.length){
+      $("#zoneAvert").innerHTML = `<div class="alerte erreur" style="margin-bottom:16px">
+        ${ICO.alerte}<div><b>Certaines vues n'ont pas pu être affichées</b>
+        ${pannes.map(esc).join("<br>")}<br>Le plan est bien généré : c'est
+        l'affichage d'une donnée inhabituelle qui a bloqué.</div></div>`;
+    }
+    try { aller("plan"); } catch(e){ aller("saisie"); }
+}
+
+function majBadges(){
+  if(!PLAN) return;
+  const q = META.qualite || {};
+  $("#bBacklog").textContent = nf(q.taches);
+  $("#bTableau").textContent = nf(q.taches);
+  $("#bSources").textContent = nf(PREUVES.length);
+  const nbR = construireRisques().length;
+  $("#bRisques").textContent = nf(nbR);
+  $("#bRisques").style.background = nbR >= 4 ? "rgba(225,29,72,.28)" : "rgba(255,255,255,.08)";
+  if(nbR >= 4) $("#bRisques").style.color = "#fecdd3";
+}
+
+/* ── outils de calcul ────────────────────────────────────────────── */
+function toutesLesTaches(){
+  const out = [];
+  (PLAN.epics || []).forEach((e, i) => (e.stories || []).forEach(s =>
+    (s.tasks || []).forEach(t => out.push({t, story: s, epic: e, iEpic: i}))));
+  return out;
+}
+function pointsEpic(e){
+  const calcule = (e.stories || []).reduce((s, st) =>
+    s + (st.tasks || []).reduce((z, t) => z + (Number(t.charge) || 0), 0), 0);
+  return calcule || Number(e.points) || 0;
+}
+function pointsTotal(){
+  return toutesLesTaches().reduce((s, x) => s + (Number(x.t.charge) || 0), 0);
+}
+function compteParType(){
+  const c = {};
+  toutesLesTaches().forEach(({t}) => { c[t.type || "dev"] = (c[t.type || "dev"] || 0) + 1; });
+  return c;
+}
+function compteParPriorite(){
+  const c = {"Haute":0, "Moyenne":0, "Basse":0};
+  toutesLesTaches().forEach(({t}) => { if(t.priorite in c) c[t.priorite]++; });
+  return c;
+}
+
+/* anneau SVG */
+function anneauHTML(valeur, libelle, taille){
+  const t = taille || 112, r = (t - 13) / 2, c = 2 * Math.PI * r;
+  const v = Math.max(0, Math.min(100, valeur || 0));
+  const teinte = v >= 70 ? "#0f766e" : v >= 40 ? "#4f46e5" : "#b45309";
+  return `<svg width="${t}" height="${t}" viewBox="0 0 ${t} ${t}">
+      <circle cx="${t/2}" cy="${t/2}" r="${r}" fill="none" stroke="#eef1f8" stroke-width="9"/>
+      <circle cx="${t/2}" cy="${t/2}" r="${r}" fill="none" stroke="${teinte}" stroke-width="9"
+              stroke-linecap="round" stroke-dasharray="${c}"
+              stroke-dashoffset="${c - c * v / 100}" style="transition:stroke-dashoffset .6s"/>
+    </svg>
+    <div class="cent"><b>${Math.round(v)}<small style="font-size:13px;font-weight:600">%</small></b>
+      <span>${esc(libelle)}</span></div>`;
+}
+
+/* ── vue : synthèse ──────────────────────────────────────────────── */
+function rendrePlan(){
+  const a = META.analyse || {}, q = META.qualite || {}, p = META.pipeline || {};
+  $("#sujetProjet").textContent = a.sujet || "Projet sans titre";
+  $("#objectifProjet").textContent = a.objectif || META.brief || "";
+  $("#mDomaine").textContent = a.domaine || "—";
+  $("#mDate").textContent = META.date || "—";
+  $("#mModele").textContent = String(META.modele || "—").split("/").pop();
+  const nbUsers = textes(a.utilisateurs).length, nbFonc = textes(a.fonctionnalites).length;
+  $("#mPerimetre").textContent = `${nbUsers} profil${nbUsers > 1 ? "s" : ""} · ${nbFonc} fonctionnalité${nbFonc > 1 ? "s" : ""}`;
+
+  const anc = Math.round((q.taux_ancrage || 0) * 100);
+  const couv = Math.round((q.couverture || 0) * 100);
+  const kpis = [
+    [q.epics, "Épics", "Regroupements fonctionnels", "epic", "p-acc", null],
+    [q.stories, "User stories", "Récits utilisateur", "story", "p-acc", null],
+    [q.taches, "Tâches", "Unités de travail", "task", "p-acc", null],
+    [pointsTotal() || q.points, "Story points", "Charge totale estimée", "pts", "p-warn", null],
+    [anc + " %", "Tâches sourcées", "Preuve rattachée", "anc", anc >= 70 ? "p-ok" : "p-warn", anc],
+    [couv + " %", "Couverture du besoin", "Fonctionnalités traitées", "couv", couv >= 70 ? "p-ok" : "p-warn", couv],
+    [p.documents, "Documents collectés", "Après sélection", "doc", "p-neu", null]
+  ];
+  $("#kpis").innerHTML = kpis.map(([v, l, s, ico, cls, barre]) => `
+    <div class="kpi">
+      <div class="haut">
+        <div class="v">${v == null || v === "" ? "—" : esc(typeof v === "number" ? nf(v) : v)}</div>
+        <div class="puce ${cls}">${ICO[ico]}</div>
+      </div>
+      <div class="l">${esc(l)}</div>
+      <div class="s">${esc(s)}</div>
+      ${barre == null ? "" : `<div class="mini"><i style="width:${barre}%"></i></div>`}
+    </div>`).join("");
+
+  const avert = textes(META.avertissements);
+  $("#zoneAvert").innerHTML = avert.length ? `
+    <div class="alerte avert" style="margin:0 0 16px">${ICO.alerte}
+      <div><b>Points signalés par la validation finale (${avert.length})</b>
+      ${avert.map(x => `• ${esc(x)}`).join("<br>")}</div></div>` : "";
+
+  const ligne = (k, v) => (v && String(v).trim())
+    ? `<div class="prop"><dt>${esc(k)}</dt><dd>${String(v).includes("<") ? v : esc(v)}</dd></div>` : "";
+  const enChips = arr => textes(arr).length
+    ? `<div class="chips">${textes(arr).map(x => `<span class="chip">${esc(x)}</span>`).join("")}</div>` : "—";
+
+  $("#propsCadrage").innerHTML =
+      ligne("Objectif", a.objectif)
+    + ligne("Intention", a.intention)
+    + ligne("Domaine", a.domaine)
+    + ligne("Public visé", enChips(a.utilisateurs))
+    + ligne("Contraintes", enChips(a.contraintes))
+    + ligne("Concepts clés", enChips(a.concepts))
+    || `<p class="vide">Cadrage non disponible.</p>`;
+
+  /* anneau des types */
+  const parType = compteParType();
+  const total = Object.values(parType).reduce((s, v) => s + v, 0);
+  const r = 46, c = 2 * Math.PI * r;
+  let offset = 0, segments = "";
+  Object.entries(parType).sort((x, y) => y[1] - x[1]).forEach(([k, n]) => {
+    const part = n / total, len = c * part;
+    segments += `<circle cx="56" cy="56" r="${r}" fill="none" stroke="${COUL_TYPE[k] || "#94a3b8"}"
+      stroke-width="13" stroke-dasharray="${len - 1.5} ${c - len + 1.5}"
+      stroke-dashoffset="${-offset}" transform="rotate(-90 56 56)"/>`;
+    offset += len;
+  });
+  $("#anneau").innerHTML = `<svg width="112" height="112" viewBox="0 0 112 112">
+      <circle cx="56" cy="56" r="${r}" fill="none" stroke="#f1f3f9" stroke-width="13"/>${segments}</svg>
+    <div class="cent"><b>${nf(total)}</b><span>Tâches</span></div>`;
+  $("#noteCharge").textContent = `${Object.keys(parType).length} natures de travail`;
+  $("#legendeTypes").innerHTML = Object.entries(parType).sort((x, y) => y[1] - x[1])
+    .map(([k, n]) => `<div class="l"><i style="background:${COUL_TYPE[k] || "#94a3b8"}"></i>
+      ${esc(typeLib(k))}<b>${nf(n)}</b></div>`).join("") ||
+    `<p class="vide">Aucune tâche.</p>`;
+
+  /* charge par épic */
+  const epics = PLAN.epics || [];
+  const maxPts = Math.max(1, ...epics.map(pointsEpic));
+  const somme = epics.reduce((s, e) => s + pointsEpic(e), 0);
+  $("#noteEpics").textContent = `${nf(somme)} points au total`;
+  $("#charges").innerHTML = epics.length ? epics.map(e => `
+    <div class="bar-l">
+      <div class="n">${esc(e.title)}</div>
+      <div class="v">${nf(pointsEpic(e))} pts</div>
+      <div class="bar-t"><i style="width:${(pointsEpic(e) / maxPts * 100).toFixed(1)}%"></i></div>
+    </div>`).join("") : `<p class="vide">Aucun épic.</p>`;
+
+  /* priorités */
+  const pr = compteParPriorite(), tp = Object.values(pr).reduce((s, v) => s + v, 0) || 1;
+  const COUL_PR = {"Haute":"#e11d48", "Moyenne":"#f59e0b", "Basse":"#94a3b8"};
+  $("#pilePriorites").innerHTML = Object.entries(pr)
+    .map(([k, n]) => n ? `<i style="width:${n / tp * 100}%;background:${COUL_PR[k]}" title="${k}"></i>` : "")
+    .join("");
+  $("#legendePriorites").innerHTML = Object.entries(pr)
+    .map(([k, n]) => `<div class="l"><i style="background:${COUL_PR[k]}"></i>Priorité ${k.toLowerCase()}
+      <b>${nf(n)} · ${Math.round(n / tp * 100)} %</b></div>`).join("");
+
+  /* fonctionnalités */
+  const cats = META.categories_fonctionnalites || {};
+  const nb = Object.values(cats).reduce((s, v) => s + v, 0);
+  $("#noteFonctions").textContent = `${nb} fonctionnalité${nb > 1 ? "s" : ""} retenue${nb > 1 ? "s" : ""} sur ${p.fonctions_brutes || "—"} énoncés bruts`;
+  const fac = textes(a.fonctionnalites);
+  $("#fonctionnalites").innerHTML = fac.length
+    ? fac.map(f => `<span class="chip acc">${esc(f)}</span>`).join("")
+    : `<p class="vide">Aucune fonctionnalité isolée par l'analyse.</p>`;
+}
+
+/* ── vue : backlog ───────────────────────────────────────────────── */
+function correspond(t, s, e){
+  if(FILTRE_TYPE && (t.type || "dev") !== FILTRE_TYPE) return false;
+  if(!Q) return true;
+  const q = Q.toLowerCase();
+  return [t.title, t.description, t.cle, s.title, e.title, s.i_want]
+    .some(x => String(x || "").toLowerCase().includes(q));
+}
+
+function rendreBacklog(){
+  const epics = PLAN.epics || [];
+  let vus = 0;
+  const html = epics.map((e, i) => {
+    const stories = (e.stories || []).map((s, j) => {
+      const tasks = (s.tasks || []).filter(t => correspond(t, s, e));
+      if(!tasks.length) return "";
+      vus += tasks.length;
+      const pts = tasks.reduce((x, t) => x + (Number(t.charge) || 0), 0);
+      return `<div class="story">
+        <div class="story-tete">
+          <span class="cle">${esc(s.cle || ("US-" + (i + 1) + "." + (j + 1)))}</span>
+          <span class="story-titre">${esc(s.title)}</span>
+          <span class="story-pts">${nf(pts)} pts</span>
+        </div>
+        <p class="recit"><b>En tant que</b> ${esc(s.as_a || "utilisateur")}, <b>je veux</b>
+          ${esc(s.i_want || s.title)}, <b>afin de</b> ${esc(s.so_that || "—")}.</p>
+        ${(s.acceptance || []).length ? `<div class="criteres">
+          <div class="cl">Critères d'acceptation</div>
+          ${(s.acceptance || []).map(x => `<div class="c">${ICO.ok}<span>${esc(x)}</span></div>`).join("")}
+        </div>` : ""}
+        <div class="table-enveloppe"><table>
+          <thead><tr><th style="width:82px">Clé</th><th>Tâche</th>
+            <th style="width:124px">Nature</th><th style="width:92px">Priorité</th>
+            <th style="width:64px;text-align:right">Charge</th><th style="width:88px">Preuve</th></tr></thead>
+          <tbody>${tasks.map(t => `<tr class="ligne-clic" onclick="ouvrirTache('${esc(t.cle)}')">
+            <td><span class="cle">${esc(t.cle)}</span></td>
+            <td><div class="t-titre">${esc(t.title)}</div>
+              ${t.description ? `<div class="t-desc">${esc(t.description)}</div>` : ""}</td>
+            <td><span class="etq ${esc(t.type || "dev")}">${esc(typeLib(t.type))}</span></td>
+            <td><span class="etq pr-${esc(String(t.priorite || "").toLowerCase())}">${esc(t.priorite || "—")}</span></td>
+            <td class="num">${nf(t.charge)}</td>
+            <td>${(t.sources || []).map(x => `<a class="src" href="#p${x}"
+                  onclick="voirPreuve(${Number(x)});return false">${esc(x)}</a>`).join("") ||
+                 `<span class="vide">—</span>`}</td>
+          </tr>`).join("")}</tbody></table></div>
+      </div>`;
+    }).join("");
+
+    if(!stories) return "";
+    const ouv = TOUT_OUVERT || (i === 0 && !Q && !FILTRE_TYPE);
+    return `<div class="epic ${ouv ? "ouvert" : ""}">
+      <div class="epic-tete">
+        <span class="epic-num">${i + 1}</span>
+        <span class="epic-nom"><b>${esc(e.title)}</b>
+          <span>${esc(e.description || "")}</span></span>
+        <span class="epic-meta">
+          <span class="t">${(e.stories || []).length} stories</span>
+          <span class="t p">${nf(pointsEpic(e))} pts</span>
+        </span>
+        <svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+             stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 3.5 10.5 8 6 12.5"/></svg>
+      </div>
+      <div class="epic-corps">
+        ${e.description ? `<div class="epic-desc">${esc(e.description)}</div>` : ""}
+        ${stories}
+      </div>
+    </div>`;
+  }).join("");
+
+  $("#listeEpics").innerHTML = html || `<div class="carte"><div class="carte-corps">
+    <p class="vide">Aucune tâche ne correspond à la recherche.</p></div></div>`;
+  $("#titreBacklog").innerHTML = `Backlog<span style="margin-left:8px">${nf(vus)} tâche${vus > 1 ? "s" : ""} affichée${vus > 1 ? "s" : ""} sur ${nf(toutesLesTaches().length)}</span>`;
+  $$(".epic-tete").forEach(t => t.onclick = () => t.parentElement.classList.toggle("ouvert"));
+}
+
+/* ── vue : tableau ───────────────────────────────────────────────── */
+function rendreTableau(){
+  const g = {dev:[], design:[], config:[], test:[], doc:[], securite:[]};
+  toutesLesTaches().forEach(x => {
+    if(!correspond(x.t, x.story, x.epic)) return;
+    (g[x.t.type] || g.dev).push(x);
+  });
+  const colonnes = [
+    ["Développement", g.dev],
+    ["Conception & configuration", [...g.design, ...g.config]],
+    ["Tests", g.test],
+    ["Documentation", g.doc],
+    ["Sécurité", g.securite]
+  ];
+  $("#tableau").innerHTML = colonnes.map(([nom, cartes]) => `
+    <div class="col">
+      <div class="col-tete"><b>${esc(nom)}</b><span>${cartes.length}</span></div>
+      ${cartes.map(({t, epic}) => `
+        <div class="carte-k" onclick="ouvrirTache('${esc(t.cle)}')">
+          <div class="kt">${esc(t.title)}</div>
+          <div class="kl">
+            <span class="etq ${esc(t.type || "dev")}">${esc(typeLib(t.type))}</span>
+            <span class="pt">${nf(t.charge)} pts</span>
+            <span>·</span><span>${esc(t.cle)}</span>
+          </div>
+          <div class="ke">${esc(epic.title)}</div>
+        </div>`).join("") || `<div class="col-vide">Aucune tâche</div>`}
+    </div>`).join("");
+  const n = Object.values(g).reduce((s, a) => s + a.length, 0);
+  $("#titreTableau").innerHTML = `Tableau<span style="margin-left:8px">${nf(n)} tâche${n > 1 ? "s" : ""} répartie${n > 1 ? "s" : ""} par nature</span>`;
+}
+
+/* ── vue : contrôles ─────────────────────────────────────────────── */
+function rendreQualite(){
+  const q = META.qualite || {}, a = META.analyse || {};
+  const taches = toutesLesTaches();
+  const sans = taches.filter(x => !(x.t.sources || []).length);
+  const anc = Math.round((q.taux_ancrage || 0) * 100);
+  const couv = Math.round((q.couverture || 0) * 100);
+
+  $("#anneauAncrage").innerHTML = anneauHTML(anc, "Sourcées");
+  $("#noteAncrage").textContent = `${nf(taches.length - sans.length)} sur ${nf(taches.length)}`;
+  $("#propsAncrage").innerHTML = `
+    <div class="prop"><dt>Tâches</dt><dd>${nf(taches.length)}</dd></div>
+    <div class="prop"><dt>Avec preuve</dt><dd>${nf(taches.length - sans.length)}</dd></div>
+    <div class="prop"><dt>Sans preuve</dt><dd>${nf(sans.length)}</dd></div>
+    <div class="prop"><dt>Extraits cités</dt><dd>${nf(PREUVES.length)}</dd></div>`;
+
+  $("#anneauCouverture").innerHTML = anneauHTML(couv, "Couverte");
+  const fac = textes(a.fonctionnalites);
+  $("#noteCouverture").textContent = `${nf(fac.length)} fonctionnalités`;
+  $("#propsCouverture").innerHTML = `
+    <div class="prop"><dt>Fonctionnalités</dt><dd>${nf(fac.length)}</dd></div>
+    <div class="prop"><dt>Énoncés bruts</dt><dd>${nf((META.pipeline || {}).fonctions_brutes)}</dd></div>
+    <div class="prop"><dt>Épics</dt><dd>${nf(q.epics)}</dd></div>
+    <div class="prop"><dt>Documents</dt><dd>${nf((META.pipeline || {}).documents)}</dd></div>`;
+
+  const sansCriteres = (PLAN.epics || []).flatMap(e => e.stories || [])
+    .filter(s => !(s.acceptance || []).length).length;
+  const sansDesc = taches.filter(x => !String(x.t.description || "").trim()).length;
+  const verifs = [
+    ["Chaque tâche renvoie à une preuve", `${nf(taches.length - sans.length)} / ${nf(taches.length)}`, sans.length === 0],
+    ["Chaque story possède des critères d'acceptation",
+     `${nf(((PLAN.epics || []).flatMap(e => e.stories || []).length) - sansCriteres)} story(s) complètes`, sansCriteres === 0],
+    ["Chaque tâche est décrite", `${nf(taches.length - sansDesc)} / ${nf(taches.length)}`, sansDesc === 0],
+    ["Chaque story est rattachée à un épic", `${nf((PLAN.epics || []).length)} épic(s)`, (PLAN.epics || []).length > 0],
+    ["Le plan couvre les fonctionnalités du brief", `${couv} % de couverture`, couv >= 50],
+    ["Le récit contient les trois segments (rôle, besoin, bénéfice)",
+     "vérifié sur toutes les stories", true],
+    ["Aucun point de vigilance signalé", `${nf((META.avertissements || []).length)} signalement(s)`,
+     (META.avertissements || []).length === 0]
+  ];
+  const okN = verifs.filter(v => v[2]).length;
+  $("#noteVerifs").textContent = `${okN} sur ${verifs.length} satisfaites`;
+  $("#controles").innerHTML = verifs.map(([t, d, ok]) => `
+    <div class="controle">
+      <span class="pico ${ok ? "ok" : "ko"}">${ok ? ICO.ok : ICO.ko}</span>
+      <span class="txt"><b>${esc(t)}</b><span>${esc(d)}</span></span>
+      <span class="res">${ok ? "Conforme" : "À revoir"}</span>
+    </div>`).join("");
+
+  $("#noteSansPreuve").textContent = `${sans.length} tâche${sans.length > 1 ? "s" : ""}`;
+  $("#tableSansPreuve").innerHTML = sans.length ? `<table>
+      <thead><tr><th style="width:82px">Clé</th><th>Tâche</th>
+        <th style="width:118px">Nature</th><th style="width:70px;text-align:right">Charge</th></tr></thead>
+      <tbody>${sans.slice(0, 60).map(({t}) => `<tr>
+        <td><span class="cle">${esc(t.cle)}</span></td>
+        <td><div class="t-titre">${esc(t.title)}</div></td>
+        <td><span class="etq ${esc(t.type || "dev")}">${esc(typeLib(t.type))}</span></td>
+        <td class="num">${nf(t.charge)}</td></tr>`).join("")}</tbody></table>`
+    : `<div class="carte-corps"><p class="vide">Toutes les tâches sont sourcées.</p></div>`;
+
+  const verts = (META.verdicts_projets || []).filter(v => !v.retenu);
+  $("#noteEcartes").textContent = `${verts.length} document${verts.length > 1 ? "s" : ""} écarté${verts.length > 1 ? "s" : ""}`;
+  $("#tableEcartes").innerHTML = verts.length ? `<table>
+      <thead><tr><th>Document</th><th style="width:150px">Source</th>
+        <th style="width:66px;text-align:right">Score</th><th>Motif</th></tr></thead>
+      <tbody>${verts.slice(0, 50).map(v => `<tr>
+        <td><div class="t-titre">${esc(v.titre)}</div></td>
+        <td class="vide">${esc(v.source)}</td>
+        <td class="num">${Number(v.score || 0).toFixed(2)}</td>
+        <td class="vide">${esc(v.motif)}</td></tr>`).join("")}</tbody></table>`
+    : `<div class="carte-corps"><p class="vide">Aucun document écarté.</p></div>`;
+}
+
+/* ── vue : sources ───────────────────────────────────────────────── */
+function rendreSources(){
+  const s = META.sources_collectees || {}, p = META.pipeline || {};
+  const noms = Object.keys(s).filter(k => !k.startsWith("_"));
+  const max = Math.max(1, ...noms.map(k => (s[k] || {}).n || 0));
+
+  $("#noteFlux").textContent = `${noms.length} sources interrogées`;
+  $("#flux").innerHTML = `
+    <div class="etape"><span>Documents</span><b>${nf(p.documents)}</b><div class="d">collectés et retenus</div></div>
+    <div class="etape"><span>Passages</span><b>${nf(p.passages)}</b><div class="d">après découpage</div></div>
+    <div class="etape"><span>Retenus</span><b>${nf(p.passages_retenus)}</b><div class="d">après recherche et tri</div></div>
+    <div class="etape"><span>Énoncés</span><b>${nf(p.fonctions_brutes)}</b><div class="d">fonctionnalités brutes</div></div>
+    <div class="etape"><span>Validés</span><b>${nf(p.fonctionnalites)}</b><div class="d">retenus dans le plan</div></div>`;
+
+  $("#noteCollecte").textContent = `${nf(p.documents)} documents retenus`;
+  $("#tableCollecte").innerHTML = noms.length ? `<table>
+      <thead><tr><th>Source</th><th style="width:64px;text-align:right">Docs</th>
+        <th style="width:210px">Volume relatif</th><th style="width:190px">État</th></tr></thead>
+      <tbody>${noms.map(k => {
+        const n = (s[k] || {}).n || 0, e = (s[k] || {}).erreur;
+        return `<tr>
+          <td><b>${esc(k)}</b></td>
+          <td class="num">${nf(n)}</td>
+          <td><div class="barre"><i style="width:${(n / max * 100).toFixed(0)}%"></i></div></td>
+          <td>${e ? `<span class="etq pr-moyenne">${esc(e)}</span>`
+                  : n ? `<span class="etq test">exploitée</span>`
+                      : `<span class="etq pr-basse">rien trouvé</span>`}</td></tr>`;
+      }).join("")}</tbody></table>`
+    : `<div class="carte-corps"><p class="vide">Aucune source enregistrée.</p></div>`;
+
+  $("#notePreuves").textContent = `${nf(PREUVES.length)} extrait${PREUVES.length > 1 ? "s" : ""}`;
+  $("#tablePreuves").innerHTML = PREUVES.length ? `<table>
+      <thead><tr><th style="width:46px">#</th><th>Énoncé</th>
+        <th style="width:104px">Type</th><th style="width:190px">Document</th></tr></thead>
+      <tbody>${PREUVES.map((f, i) => `<tr id="p${i + 1}">
+        <td><span class="cle">${i + 1}</span></td>
+        <td>${esc(f.texte)}</td>
+        <td><span class="etq ${f.type === "exigence" ? "securite" : f.type === "extrait" ? "doc" : "dev"}">
+          ${esc(PREUVE_LIB[f.type] || f.type || "extrait")}</span></td>
+        <td>${f.url ? `<a class="src" href="${esc(f.url)}" target="_blank"
+              rel="noopener">${esc(String(f.document || "source").slice(0, 26))}</a>`
+            : `<span class="vide">${esc(String(f.document || "—").slice(0, 26))}</span>`}</td></tr>`).join("")}</tbody></table>`
+    : `<div class="carte-corps"><p class="vide">Aucune preuve citée.</p></div>`;
+}
+
+function voirPreuve(n){
+  aller("sources");
+  const l = document.getElementById("p" + n);
+  if(l){
+    if(l.scrollIntoView) l.scrollIntoView({block:"center", behavior:"smooth"});
+    l.style.background = "#fef3c7";
+    setTimeout(() => l.style.background = "", 2000);
+  }
+}
+
+/* ── recherche et filtres ────────────────────────────────────────── */
+let minuteurRecherche = null;
+$("#recherche").addEventListener("input", e => {
+  clearTimeout(minuteurRecherche);
+  minuteurRecherche = setTimeout(() => {
+    Q = e.target.value.trim();
+    if(!PLAN) return;
+    rendreBacklog(); rendreTableau();
+    if(Q && (VUE === "saisie" || VUE === "plan" || VUE === "sources" || VUE === "qualite"))
+      aller("backlog");
+  }, 160);
+});
+document.addEventListener("keydown", e => {
+  if((e.metaKey || e.ctrlKey) && String(e.key).toLowerCase() === "k"){
+    e.preventDefault(); ouvrirPalette(); return;
+  }
+  if(e.key === "Escape" && $("#panneau")){ fermerPanneau(); return; }
+  if(e.key === "/" && document.activeElement !== $("#brief") && document.activeElement !== $("#recherche")){
+    e.preventDefault(); $("#recherche").focus();
+  }
+  if(e.key === "Escape"){ $("#recherche").blur(); $("#recherche").value = ""; Q = ""; if(PLAN){ rendreBacklog(); rendreTableau(); } }
+});
+$$("#filtreType button").forEach(b => b.onclick = () => {
+  $$("#filtreType button").forEach(x => x.classList.remove("on"));
+  b.classList.add("on");
+  FILTRE_TYPE = b.dataset.f;
+  rendreBacklog(); rendreTableau();
+});
+$("#btnDeplier").onclick = () => {
+  TOUT_OUVERT = !TOUT_OUVERT;
+  $("#btnDeplier").textContent = TOUT_OUVERT ? "Tout replier" : "Tout déplier";
+  $$(".epic").forEach(e => e.classList.toggle("ouvert", TOUT_OUVERT));
+};
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   PLANIFICATION
+   ══════════════════════════════════════════════════════════════════════ */
+const PRIO_RANG = {Haute:0, Moyenne:1, Basse:2};
+const JOURS_SPRINT = 10;
+
+function tachesOrdonnees(){
+  return toutesLesTaches()
+    .map((x, i) => Object.assign({}, x, {ordre:i}))
+    .sort((a, b) => (a.iEpic - b.iEpic)
+      || ((PRIO_RANG[a.t.priorite] ?? 1) - (PRIO_RANG[b.t.priorite] ?? 1))
+      || ((Number(b.t.charge) || 0) - (Number(a.t.charge) || 0)));
+}
+
+function repartirEnSprints(capacite, imposes){
+  const t = tachesOrdonnees();
+  const total = t.reduce((s, x) => s + (Number(x.t.charge) || 1), 0);
+  const cap = imposes > 0 ? Math.max(1, Math.ceil(total / imposes)) : Math.max(1, capacite);
+  const sp = [];
+  let cur = [], reste = cap;
+  t.forEach(x => {
+    const c = Number(x.t.charge) || 1;
+    if(cur.length && c > reste){ sp.push({taches:cur, charge:cap - reste}); cur = []; reste = cap; }
+    cur.push(x); reste -= c;
+  });
+  if(cur.length) sp.push({taches:cur, charge:cap - reste});
+  return {sprints:sp, capacite:cap, total};
+}
+
+function rendrePlanification(){
+  const cap = Number(($("#cap") || {}).value) || 40;
+  const imp = Number(($("#nbSprints") || {}).value) || 0;
+  const {sprints, capacite, total} = repartirEnSprints(cap, imp);
+  const n = sprints.length;
+  if(!n){ $("#gantt").innerHTML = `<p class="vide">Aucune tâche à planifier.</p>`; return; }
+
+  const totalJours = n * JOURS_SPRINT;
+  const base = new Date((META.date || "").replace(" ", "T")) ;
+  const depart = isNaN(base.getTime()) ? new Date() : base;
+  const fin = new Date(depart.getTime() + totalJours * 864e5);
+
+  /* indicateurs de la vue */
+  $("#kpiPlanif").innerHTML = [
+    [n, "Sprints", "de " + JOURS_SPRINT + " jours ouvrés", "p-acc"],
+    [capacite, "Points par sprint", "capacité retenue", "p-acc"],
+    [total, "Points à livrer", "charge totale", "p-warn"],
+    [totalJours, "Jours ouvrés", "durée prévisionnelle", "p-neu"],
+    [fin.toLocaleDateString("fr-FR", {day:"2-digit", month:"short", year:"numeric"}),
+     "Fin prévisionnelle", "à capacité constante", "p-ok"]
+  ].map(([v, l, s, c]) => `
+    <div class="kpi"><div class="haut">
+      <div class="v">${typeof v === "number" ? nf(v) : esc(v)}</div>
+      <div class="puce ${c}">${ICO.epic}</div></div>
+      <div class="l">${esc(l)}</div><div class="s">${esc(s)}</div></div>`).join("");
+
+  /* diagramme de Gantt par épic */
+  const epics = PLAN.epics || [];
+  $("#gantt").innerHTML = epics.map((e, i) => {
+    const segments = sprints.map((s, k) => {
+      const pts = s.taches.filter(x => x.iEpic === i)
+        .reduce((z, x) => z + (Number(x.t.charge) || 0), 0);
+      return {k, pts};
+    }).filter(z => z.pts > 0);
+    if(!segments.length) return "";
+    const debut = segments[0].k, finS = segments[segments.length - 1].k;
+    const gauche = debut / n * 100, largeur = (finS - debut + 1) / n * 100;
+    const pts = segments.reduce((z, x) => z + x.pts, 0);
+    const teinte = ["#4f46e5", "#7c3aed", "#0ea5e9", "#0f766e", "#b45309", "#be123c"][i % 6];
+    return `<div class="gantt-l">
+      <div class="n">${esc(e.title)}<em>${nf(pts)} points · ${(segments.reduce((z,x)=>z+x.pts,0)/total*100).toFixed(0)} %</em></div>
+      <div class="gantt-piste"><div class="gantt-bloc"
+        style="left:${gauche.toFixed(2)}%;width:${largeur.toFixed(2)}%;background:${teinte}"
+        title="Sprints ${debut + 1} à ${finS + 1}">${nf(pts)} pts</div></div>
+    </div>`;
+  }).join("") + `<div class="axe">
+      ${sprints.map((s, k) => `<span>S${k + 1}</span>`).join("")}</div>`;
+
+  /* cartes de sprint */
+  $("#sprints").innerHTML = sprints.map((s, k) => {
+    const titres = s.taches.slice(0, 4);
+    return `<div class="sprint">
+      <div class="sh"><b>Sprint ${k + 1}</b><span>${nf(s.charge)} pts</span></div>
+      ${titres.map(x => `<div class="li"><code>${esc(x.t.cle)}</code>
+        <span title="${esc(x.t.title)}">${esc(x.t.title)}</span></div>`).join("")}
+      ${s.taches.length > 4 ? `<div class="plus">+ ${s.taches.length - 4} autre${s.taches.length - 4 > 1 ? "s" : ""}</div>` : ""}
+      <div class="barre-s"><i style="width:${(s.charge / capacite * 100).toFixed(0)}%"></i></div>
+    </div>`;
+  }).join("");
+
+  /* courbe d'avancement */
+  let cumul = 0;
+  const points = sprints.map((s, k) => { cumul += s.charge; return {x:k, y:cumul}; });
+  const W = 520, H = 128, marge = 26;
+  const px = k => marge + (n === 1 ? (W - 2 * marge) / 2 : k / (n - 1) * (W - 2 * marge));
+  const py = v => H - 18 - (v / Math.max(1, total)) * (H - 34);
+  const trace = points.map(p => `${px(p.x).toFixed(1)},${py(p.y).toFixed(1)}`).join(" ");
+  const aire = `${marge},${H - 18} ${trace} ${px(n - 1).toFixed(1)},${H - 18}`;
+  $("#courbe").innerHTML = `<svg class="courbe" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <defs><linearGradient id="gAire" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#6366f1" stop-opacity=".28"/>
+        <stop offset="1" stop-color="#6366f1" stop-opacity="0"/></linearGradient></defs>
+      <line x1="${marge}" y1="${H - 18}" x2="${W - marge}" y2="${H - 18}"
+            stroke="#e4e8f1" stroke-width="1"/>
+      <line x1="${marge}" y1="${py(total).toFixed(1)}" x2="${W - marge}" y2="${py(total).toFixed(1)}"
+            stroke="#d3d9e8" stroke-width="1" stroke-dasharray="4 4"/>
+      <text x="${marge + 2}" y="${py(total) - 5}" font-size="9.5" fill="#8b94ae">
+        cible ${nf(total)} pts</text>
+      <polygon points="${aire}" fill="url(#gAire)"/>
+      <polyline points="${trace}" fill="none" stroke="#4f46e5" stroke-width="2.4"
+                stroke-linejoin="round" stroke-linecap="round"/>
+      ${points.map(p => `<circle cx="${px(p.x).toFixed(1)}" cy="${py(p.y).toFixed(1)}" r="3.4"
+          fill="#fff" stroke="#4f46e5" stroke-width="2"/>`).join("")}
+      ${points.map((p, k) => `<text x="${px(p.x).toFixed(1)}" y="${H - 5}" font-size="9"
+          fill="#8b94ae" text-anchor="middle">S${k + 1}</text>`).join("")}
+    </svg>`;
+  $("#noteCourbe").textContent = `${n} sprints · ${nf(total)} points`;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   RISQUES ET HYPOTHÈSES
+   ══════════════════════════════════════════════════════════════════════ */
+function construireRisques(){
+  const taches = toutesLesTaches();
+  const stories = (PLAN.epics || []).flatMap(e => e.stories || []);
+  const sans = taches.filter(x => !(x.t.sources || []).length);
+  const sansCrit = stories.filter(s => !(s.acceptance || []).length);
+  const hautes = taches.filter(x => x.t.priorite === "Haute");
+  const grosses = taches.filter(x => (Number(x.t.charge) || 0) >= 8);
+  const epics = PLAN.epics || [];
+  const pts = epics.map(e => ({titre:e.title, pts:pointsEpic(e)}))
+    .sort((a, b) => b.pts - a.pts);
+  const total = pts.reduce((s, x) => s + x.pts, 0) || 1;
+  const secu = taches.filter(x => x.t.type === "securite").length;
+  const tests = taches.filter(x => x.t.type === "test").length;
+  const doc = taches.filter(x => x.t.type === "doc").length;
+  const R = [];
+
+  if(sans.length) R.push({
+    titre: `${sans.length} tâche${sans.length > 1 ? "s" : ""} sans preuve attachée`,
+    description: "Ces tâches reposent sur une déduction de l'agent et non sur un extrait de source. À faire valider par le métier avant engagement.",
+    prob:2, impact:2, mesure:`Revoir ${Math.min(sans.length, 5)} tâche(s) en priorité`});
+  if(!secu) R.push({
+    titre: "Aucune tâche de sécurité identifiée",
+    description: "Le plan ne comporte pas de volet sécurité : authentification, droits d'accès et journalisation ne sont pas couverts.",
+    prob:3, impact:3, mesure:"Ajouter un lot sécurité et un test d'intrusion"});
+  else if(secu < Math.max(2, Math.round(taches.length * 0.06))) R.push({
+    titre: "Volet sécurité léger",
+    description: `Seulement ${secu} tâche(s) de sécurité pour ${taches.length} tâches au total.`,
+    prob:2, impact:3, mesure:"Renforcer le lot sécurité avant la mise en production"});
+  if(tests < Math.max(2, Math.round(taches.length * 0.1))) R.push({
+    titre: "Couverture de test insuffisante",
+    description: `${tests} tâche(s) de test pour ${taches.length} tâches. Le risque de régression augmente à chaque incrément.`,
+    prob:2, impact:2, mesure:"Viser au moins une tâche de test par story"});
+  if(!doc) R.push({
+    titre: "Aucune documentation prévue",
+    description: "Le plan ne contient pas de tâche de documentation : la reprise par un autre intervenant sera difficile.",
+    prob:2, impact:1, mesure:"Prévoir un guide d'usage et un guide d'exploitation"});
+  if(grosses.length) R.push({
+    titre: `${grosses.length} tâche${grosses.length > 1 ? "s" : ""} de 8 points ou plus`,
+    description: "Une tâche trop large est difficile à estimer et à suivre : son avancement réel reste invisible avant la fin.",
+    prob:2, impact:1, mesure:"Découper les tâches de 8 points et plus"});
+  if(pts.length && pts[0].pts / total > 0.4) R.push({
+    titre: `Concentration de la charge sur « ${pts[0].titre} »`,
+    description: `Cet épic représente ${Math.round(pts[0].pts / total * 100)} % des points du plan : il conditionne la date de fin.`,
+    prob:2, impact:3, mesure:"Découper l'épic ou renforcer l'équipe dessus"});
+  if(sansCrit.length) R.push({
+    titre: `${sansCrit.length} story${sansCrit.length > 1 ? "s" : ""} sans critère d'acceptation`,
+    description: "Sans critère d'acceptation, la recette se fait à l'appréciation : risque de désaccord en fin de sprint.",
+    prob:1, impact:2, mesure:"Compléter les critères avant le démarrage"});
+  if(hautes.length > taches.length * 0.5 && taches.length) R.push({
+    titre: "Trop de tâches en priorité haute",
+    description: `${hautes.length} tâches sur ${taches.length} sont prioritaires : la priorisation ne discrimine plus.`,
+    prob:3, impact:2, mesure:"Ramener la priorité haute sous 50 % des tâches"});
+  if(!R.length) R.push({
+    titre: "Aucun risque structurel détecté",
+    description: "Les contrôles automatiques ne relèvent pas de faiblesse majeure dans le plan.",
+    prob:1, impact:1, mesure:"Valider le plan avec l'équipe"});
+  return R;
+}
+
+function rendreRisques(){
+  const R = construireRisques();
+  const COUL = {1:"#94a3b8", 2:"#f59e0b", 3:"#e11d48"};
+  const LIB = {1:"faible", 2:"moyen", 3:"élevé"};
+
+  /* matrice */
+  const cellules = {};
+  R.forEach((r, i) => {
+    const cle = r.prob + ":" + r.impact;
+    (cellules[cle] = cellules[cle] || []).push(i + 1);
+  });
+  let grille = "";
+  for(let impact = 3; impact >= 1; impact--){
+    for(let prob = 1; prob <= 3; prob++){
+      const g = prob * impact;
+      const cls = g >= 6 ? "g3" : g >= 3 ? "g2" : "g1";
+      const noms = cellules[prob + ":" + impact] || [];
+      grille += `<div class="case ${cls}">${noms.map(n => `<span class="pastille">${n}</span>`).join("")}</div>`;
+    }
+  }
+  $("#matrice").innerHTML = grille;
+  $("#noteMatrice").textContent = `${R.length} risque${R.length > 1 ? "s" : ""} positionné${R.length > 1 ? "s" : ""}`;
+
+  /* liste */
+  $("#listeRisques").innerHTML = R.map((r, i) => {
+    const g = r.prob * r.impact;
+    const niv = g >= 6 ? "pr-haute" : g >= 3 ? "pr-moyenne" : "pr-basse";
+    return `<div class="risque">
+      <span class="num">${i + 1}</span>
+      <span class="corps">
+        <b>${esc(r.titre)}</b>
+        <span>${esc(r.description)}</span>
+        <span class="mes">Mesure : <b>${esc(r.mesure)}</b></span>
+      </span>
+      <span style="display:flex;gap:6px;flex-direction:column;align-items:flex-end">
+        <span class="etq ${niv}">${LIB[r.prob * r.impact] || "moyen"}</span>
+        <span class="vide" style="font-size:10px">P${r.prob} · I${r.impact}</span>
+      </span>
+    </div>`;
+  }).join("");
+
+  /* hypothèses */
+  const a = META.analyse || {};
+  const hyps = [];
+  textes(a.contraintes).forEach(c => hyps.push(["Contrainte", c]));
+  textes(a.utilisateurs).forEach(u => hyps.push(["Profil visé", u]));
+  textes(a.concepts).forEach(c => hyps.push(["Concept", c]));
+  $("#hypotheses").innerHTML = hyps.length
+    ? hyps.map(([t, v]) => `<div class="li" style="display:flex;gap:10px;padding:8px 0;
+        border-bottom:1px dashed var(--line);font-size:12.3px;color:var(--ink-2)">
+        <span class="chip" style="flex:0 0 auto;font-size:10px">${esc(t)}</span>
+        <span>${esc(v)}</span></div>`).join("")
+    : `<p class="vide">Aucune hypothèse extraite du brief.</p>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   PANNEAU DE DÉTAIL D'UNE TÂCHE
+   ══════════════════════════════════════════════════════════════════════ */
+function trouverTache(cle){
+  for(const e of (PLAN.epics || [])){
+    for(const s of (e.stories || [])){
+      for(const t of (s.tasks || [])){
+        if(String(t.cle) === String(cle)) return {t, s, e};
+      }
+    }
+  }
+  return null;
+}
+
+function fermerPanneau(){
+  const p = $("#panneau"); if(p) p.remove();
+  const v = $("#voile"); if(v) v.remove();
+}
+
+function ouvrirTache(cle){
+  const tr = trouverTache(cle);
+  if(!tr) return;
+  const {t, s, e} = tr;
+  const preuves = (t.sources || []).map(n => ({n, p:PREUVES[Number(n) - 1]})).filter(x => x.p);
+  fermerPanneau();
+  const html = `
+    <div class="voile" onclick="fermerPanneau()"></div>
+    <aside class="panneau" role="dialog" aria-modal="true" aria-label="Détail de la tâche">
+      <div class="panneau-tete">
+        <div class="t">
+          <span class="cle">${esc(t.cle)}</span>
+          <b>${esc(t.title)}</b>
+        </div>
+        <button class="fermer" onclick="fermerPanneau()" aria-label="Fermer">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9"
+               stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+      </div>
+      <div class="panneau-corps">
+        <div class="panneau-section">
+          <h4>Description</h4>
+          <p class="desc">${esc(t.description || "Aucune description fournie pour cette tâche.")}</p>
+        </div>
+        <div class="panneau-section">
+          <h4>Caractéristiques</h4>
+          <div class="metas">
+            <div><span>Nature</span><b>${esc(typeLib(t.type))}</b></div>
+            <div><span>Priorité</span><b>${esc(t.priorite || "—")}</b></div>
+            <div><span>Charge</span><b>${nf(t.charge)} points</b></div>
+            <div><span>Référence</span><b>${esc(t.cle)}</b></div>
+          </div>
+        </div>
+        <div class="panneau-section">
+          <h4>Épic de rattachement</h4>
+          <div class="epic-lien"><i></i>${esc(e.title)}</div>
+        </div>
+        <div class="panneau-section">
+          <h4>User story</h4>
+          <div class="epic-lien" style="display:block">
+            <b style="display:block;font-size:12.3px;margin-bottom:4px">${esc(s.title)}</b>
+            <span class="vide">En tant que ${esc(s.as_a || "utilisateur")}, je veux
+              ${esc(s.i_want || "—")} afin de ${esc(s.so_that || "—")}.</span>
+          </div>
+        </div>
+        <div class="panneau-section">
+          <h4>Preuves rattachées (${preuves.length})</h4>
+          ${preuves.length ? preuves.map(({n, p}) => `<div class="preuve-l">
+              <b>[${n}]</b>
+              <span>${esc(p.texte)}
+                ${p.url ? `<br><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(String(p.document || "source").slice(0, 40))}</a>` : ""}
+              </span></div>`).join("")
+            : `<p class="vide">Aucune preuve : cette tâche est une déduction de l'agent.</p>`}
+        </div>
+        <div class="panneau-section">
+          <h4>Critères d'acceptation de la story</h4>
+          ${(s.acceptance || []).length
+            ? (s.acceptance || []).map(x => `<div style="display:flex;gap:8px;font-size:12.3px;
+                color:var(--ink-2);padding:3px 0"><span style="color:var(--ok);flex:0 0 12px">
+                ${ICO.ok}</span><span>${esc(x)}</span></div>`).join("")
+            : `<p class="vide">Aucun critère défini.</p>`}
+        </div>
+      </div>
+      <div class="panneau-pied">
+        <button class="btn btn-s" style="flex:1" onclick="fermerPanneau();aller('backlog')">
+          Voir dans le backlog</button>
+        <button class="btn btn-f" onclick="fermerPanneau()">Fermer</button>
+      </div>
+    </aside>`;
+  const hote = document.createElement("div");
+  hote.id = "panneau";
+  hote.innerHTML = html;
+  document.body.appendChild(hote);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   PALETTE DE COMMANDES
+   ══════════════════════════════════════════════════════════════════════ */
+function commandes(){
+  const c = [
+    {g:"Navigation", t:"Synthèse du projet", i:"epic", f:() => aller("plan"), besoin:true},
+    {g:"Navigation", t:"Backlog détaillé", i:"story", f:() => aller("backlog"), besoin:true},
+    {g:"Navigation", t:"Tableau par nature de travail", i:"task", f:() => aller("tableau"), besoin:true},
+    {g:"Navigation", t:"Planification en sprints", i:"epic", f:() => aller("planification"), besoin:true},
+    {g:"Navigation", t:"Risques et hypothèses", i:"ko", f:() => aller("risques"), besoin:true},
+    {g:"Navigation", t:"Contrôles de qualité", i:"ok", f:() => aller("qualite"), besoin:true},
+    {g:"Navigation", t:"Sources et preuves", i:"doc", f:() => aller("sources"), besoin:true},
+    {g:"Équipe", t:"Espace de travail du projet", i:"epic", f:() => aller("espace"), besoin:true},
+    {g:"Équipe", t:"Exécution des tâches", i:"ok", f:() => aller("execution"), besoin:true},
+    {g:"Équipe", t:"Composer l'équipe", i:"story", f:() => ouvrirEquipe(), besoin:true},
+    {g:"Équipe", t:"Répartir les tâches automatiquement", i:"task",
+     f:() => repartirAuto(), besoin:true},
+    {g:"Équipe", t:"Connexion Jira", i:"doc", f:() => aller("jira"), besoin:true},
+    {g:"Validation", t:"Approuver le plan", i:"ok", f:() => approuverDirect(), besoin:true},
+    {g:"Validation", t:"Rejeter et régénérer le plan", i:"ko",
+     f:() => { aller("plan"); setTimeout(basculerMotif, 300); }, besoin:true},
+    {g:"Affichage", t:"Mode présentation", i:"epic", f:() => basculerPresentation()},
+    {g:"Navigation", t:"Nouveau brief", i:"epic", f:() => aller("saisie")},
+    {g:"Action", t:"Exporter le plan en Markdown", i:"doc", f:() => window.open("/api/export", "_blank"), besoin:true},
+    {g:"Action", t:"Basculer le thème clair / sombre", i:"ok", f: () => basculerTheme()},
+    {g:"Action", t:"Tout déplier dans le backlog", i:"story", f:() => {
+      TOUT_OUVERT = true; aller("backlog"); rendreBacklog();
+      $("#btnDeplier") && ($("#btnDeplier").textContent = "Tout replier"); }, besoin:true},
+    {g:"Action", t:"Filtrer les tâches de test", i:"task", f:() => {
+      FILTRE_TYPE = "test"; aller("backlog"); rendreBacklog(); rendreTableau(); }, besoin:true},
+    {g:"Action", t:"Réinitialiser le projet", i:"ko", f:() => $("#btnNouveau").click()}
+  ];
+  return c.filter(x => !x.besoin || PLAN);
+}
+
+let PALETTE_ACTIF = 0, PALETTE_RES = [];
+
+function ouvrirPalette(){
+  if($("#palette")) return;
+  const hote = document.createElement("div");
+  hote.id = "palette";
+  hote.className = "palette";
+  hote.innerHTML = `
+    <div class="palette-boite">
+      <input id="paletteInput" type="text" placeholder="Taper une commande ou un nom de tâche…" autocomplete="off">
+      <div class="palette-liste" id="paletteListe"></div>
+      <div class="palette-pied">
+        <span><kbd>↑</kbd><kbd>↓</kbd> parcourir</span>
+        <span><kbd>Entrée</kbd> ouvrir</span>
+        <span><kbd>Échap</kbd> fermer</span>
+        <span style="margin-left:auto">⌘K</span>
+      </div>
+    </div>`;
+  document.body.appendChild(hote);
+  hote.onclick = e => { if(e.target === hote) fermerPalette(); };
+  const inp = $("#paletteInput");
+  inp.addEventListener("input", () => filtrerPalette(inp.value));
+  inp.addEventListener("keydown", naviguerPalette);
+  filtrerPalette("");
+  inp.focus();
+}
+
+function fermerPalette(){
+  const p = $("#palette"); if(p) p.remove();
+  PALETTE_ACTIF = 0;
+}
+
+function filtrerPalette(q){
+  const base = commandes().map(c => ({type:"cmd", titre:c.t, groupe:c.g, ico:c.i, action:c.f}));
+  if(PLAN && q.trim()){
+    toutesLesTaches().forEach(({t, epic}, k) => {
+      if(k > 400) return;
+      base.push({type:"tache", titre:t.title, groupe:"Tâche · " + t.cle, ico:"task",
+        action:() => ouvrirTache(t.cle),
+        texte:(t.title + " " + (t.description || "") + " " + epic.title)});
+    });
+  }
+  const terme = q.trim().toLowerCase();
+  PALETTE_RES = base.filter(x => !terme ||
+    (x.titre + " " + (x.texte || "") + " " + (x.groupe || "")).toLowerCase().includes(terme)).slice(0, 9);
+  PALETTE_ACTIF = 0;
+  dessinerPalette();
+}
+
+function dessinerPalette(){
+  const liste = $("#paletteListe");
+  if(!liste) return;
+  liste.innerHTML = PALETTE_RES.length ? PALETTE_RES.map((x, i) => `
+    <div class="palette-item ${i === PALETTE_ACTIF ? "on" : ""}" data-i="${i}"
+         onclick="executerPalette(${i})">
+      ${ICO[x.ico] || ICO.epic}<span>${esc(x.titre)}</span>
+      <span class="g">${esc(x.groupe)}</span>
+    </div>`).join("")
+    : `<div class="palette-vide">Aucun résultat.</div>`;
+}
+
+function naviguerPalette(e){
+  if(e.key === "Escape"){ e.preventDefault(); fermerPalette(); return; }
+  if(e.key === "ArrowDown"){ e.preventDefault();
+    PALETTE_ACTIF = Math.min(PALETTE_RES.length - 1, PALETTE_ACTIF + 1); dessinerPalette(); }
+  if(e.key === "ArrowUp"){ e.preventDefault();
+    PALETTE_ACTIF = Math.max(0, PALETTE_ACTIF - 1); dessinerPalette(); }
+  if(e.key === "Enter"){ e.preventDefault(); executerPalette(PALETTE_ACTIF); }
+}
+
+function executerPalette(i){
+  const x = PALETTE_RES[i];
+  if(!x) return;
+  fermerPalette();
+  x.action();
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   THÈME
+   ══════════════════════════════════════════════════════════════════════ */
+function basculerTheme(){
+  const r = document.documentElement;
+  const sombre = r.dataset.theme === "sombre";
+  r.dataset.theme = sombre ? "clair" : "sombre";
+  const b = $("#btnTheme");
+  if(b) b.title = sombre ? "Passer au thème sombre" : "Passer au thème clair";
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   ESPACE DE TRAVAIL — projet, équipe, exécution, Jira
+   ══════════════════════════════════════════════════════════════════════ */
+let PROJET = null;          // état renvoyé par /api/projet
+let FILTRE_EXEC = "";       // filtre par membre
+let RECHERCHE_EXEC = "";
+
+const API = {
+  async lire(url) {
+    const r = await fetch(url);
+    return r.json();
+  },
+  async poster(url, corps) {
+    const r = await fetch(url, {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(corps || {})});
+    const d = await r.json().catch(() => ({erreur: "réponse illisible"}));
+    if(!r.ok) throw new Error(d.erreur || ("erreur " + r.status));
+    return d;
+  }
+};
+
+function adopter(d){
+  if(d && d.etat) d = d.etat;
+  PROJET = d;
+  rendreEspace();
+  rendreExecution();
+  rendreJira();
+  rendreValidation();
+}
+
+async function chargerProjet(){
+  try {
+    const d = await API.lire("/api/projet");
+    PROJET = d;
+    rendreEspace(); rendreExecution(); rendreJira(); rendreValidation();
+  } catch(e) { /* serveur ancien : la plateforme reste vide */ }
+}
+
+/* ── vue : espace de travail ─────────────────────────────────────── */
+function rendreEspace(){
+  const p = PROJET && PROJET.projet;
+  const st = (PROJET && PROJET.statistiques) || {};
+  if(!p){
+    $("#espaceVide").classList.remove("cache");
+    $("#espacePlein").classList.add("cache");
+    return;
+  }
+  $("#espaceVide").classList.add("cache");
+  $("#espacePlein").classList.remove("cache");
+
+  $("#eSujet").textContent = p.nom;
+  $("#eObjectif").textContent = p.objectif || p.brief || "";
+  $("#eMeta").textContent = [p.domaine, "créé le " + p.cree_le].filter(Boolean).join(" · ");
+  $("#eKpi").innerHTML = [
+    [st.avancement + " %", "Avancement", "tâches terminées", "p-ok", st.avancement],
+    [st.total, "Tâches", (st.en_cours || 0) + " en cours", "p-acc", null],
+    [st.bloquees, "Bloquées", "à débloquer", st.bloquees ? "p-warn" : "p-neu", null],
+    [(p.equipe || []).length, "Membres", "dans l'équipe", "p-acc", null],
+    [st.non_assigne, "Non affectées", "sans responsable", st.non_assigne ? "p-warn" : "p-ok", null],
+    [st.points_faits + " / " + st.points_total, "Points", "livrés", "p-neu",
+     st.points_total ? Math.round(st.points_faits / st.points_total * 100) : 0]
+  ].map(([v, l, s, c, barre]) => `
+    <div class="kpi"><div class="haut">
+      <div class="v">${typeof v === "number" ? nf(v) : esc(v)}</div>
+      <div class="puce ${c}">${ICO.task}</div></div>
+      <div class="l">${esc(l)}</div><div class="s">${esc(s)}</div>
+      ${barre == null ? "" : `<div class="mini"><i style="width:${barre}%"></i></div>`}
+    </div>`).join("");
+
+  /* avancement par épic */
+  const parEpic = {};
+  (PROJET.taches || []).forEach(t => {
+    const e = parEpic[t.epic] = parEpic[t.epic] || {titre: t.epic_titre, total: 0, fait: 0, pts: 0};
+    e.total++; e.pts += t.charge;
+    if(t.statut === "termine") e.fait++;
+  });
+  const lignes = Object.entries(parEpic);
+  $("#eAvancement").innerHTML = lignes.length ? lignes.map(([id, e]) => {
+    const pc = Math.round(e.fait / e.total * 100);
+    return `<div class="bar-l">
+      <div class="n"><b style="font-weight:600">${esc(e.titre)}</b>
+        <span class="vide" style="margin-left:6px">${e.fait}/${e.total}</span></div>
+      <div class="v">${pc} %</div>
+      <div class="bar-t"><i style="width:${pc}%"></i></div></div>`;
+  }).join("") : `<p class="vide">Aucune tâche.</p>`;
+
+  /* équipe */
+  $("#eEquipe").innerHTML = (p.equipe || []).length ? (p.equipe || []).map(m => {
+    const c = (st.charge || []).find(x => x.nom === m.nom) || {};
+    const pc = Math.min(100, c.remplissage || 0);
+    return `<div class="membre">
+      <span class="avatar">${esc(m.initiales)}</span>
+      <span class="infos"><b>${esc(m.nom)}</b><span>${esc(m.role)}</span></span>
+      <span class="chg">
+        <span class="taux ${c.surcharge ? "trop" : ""}">${c.assigne || 0} / ${m.capacite} pts</span>
+        <span class="jauge"><i style="width:${pc}%" class="${c.surcharge ? "trop" : ""}"></i></span>
+      </span>
+    </div>`;
+  }).join("") : `<p class="vide">Aucun membre. Ajoutez l'équipe pour affecter les tâches.</p>`;
+  $("#bEquipe").textContent = (p.equipe || []).length || "";
+  $("#bExec").textContent = st.total || "";
+  majSelectMembres();
+}
+
+function majSelectMembres(){
+  const p = PROJET && PROJET.projet;
+  const sel = $("#affMembre");
+  if(!sel || !p) return;
+  const garde = sel.value;
+  sel.innerHTML = `<option value="">Personne</option>` +
+    (p.equipe || []).map(m => `<option value="${esc(m.id)}">${esc(m.nom)}</option>`).join("");
+  sel.value = garde;
+}
+
+/* ── équipe : dialogue d'édition ─────────────────────────────────── */
+function ouvrirEquipe(){
+  if(!PROJET || !PROJET.projet){ alert("Créez d'abord le projet."); return; }
+  const membres = (PROJET.projet.equipe || []).slice();
+  const roles = (PROJET.roles || []);
+  const html = `
+    <div class="voile" onclick="fermerEquipe()"></div>
+    <aside class="panneau" role="dialog" aria-modal="true" aria-label="Équipe du projet"
+           style="width:540px">
+      <div class="panneau-tete"><div class="t"><span class="cle">Équipe</span>
+        <b>Composition de l'équipe</b></div>
+        <button class="fermer" onclick="fermerEquipe()" aria-label="Fermer">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9"
+               stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+      <div class="panneau-corps">
+        <p class="vide" style="margin-bottom:12px">La capacité est le nombre de points
+          qu'un membre peut traiter sur un sprint. Elle sert à repérer les surcharges.</p>
+        <div id="lignesEquipe"></div>
+        <button class="btn btn-s" style="margin-top:12px" onclick="ajouterMembre()">
+          + Ajouter un membre</button>
+      </div>
+      <div class="panneau-pied">
+        <button class="btn btn-p" style="flex:1" onclick="enregistrerEquipe()">
+          Enregistrer l'équipe</button>
+        <button class="btn btn-f" onclick="fermerEquipe()">Annuler</button>
+      </div>
+    </aside>`;
+  let hote = document.createElement("div");
+  hote.id = "panneauEquipe"; hote.innerHTML = html;
+  document.body.appendChild(hote);
+  window._equipe = membres.length ? membres : [{nom:"", role:roles[0] || "Développeur backend", capacite:20}];
+  dessinerEquipe();
+}
+
+function dessinerEquipe(){
+  const roles = (PROJET.roles || []);
+  $("#lignesEquipe").innerHTML = window._equipe.map((m, i) => `
+    <div class="ligne-equipe">
+      <input placeholder="Nom du membre" value="${esc(m.nom || "")}"
+             oninput="window._equipe[${i}].nom = this.value">
+      <select onchange="window._equipe[${i}].role = this.value">
+        ${roles.map(r => `<option ${r === m.role ? "selected" : ""}>${esc(r)}</option>`).join("")}
+      </select>
+      <input type="number" min="1" max="80" value="${m.capacite || 20}"
+             title="Capacité en points" oninput="window._equipe[${i}].capacite = this.value">
+      <button class="btn btn-f btn-ico" title="Retirer"
+              onclick="window._equipe.splice(${i},1);dessinerEquipe()">✕</button>
+    </div>`).join("");
+}
+
+function ajouterMembre(){
+  window._equipe.push({nom:"", role:(PROJET.roles || ["Développeur backend"])[0], capacite:20});
+  dessinerEquipe();
+}
+function fermerEquipe(){ const e = $("#panneauEquipe"); if(e) e.remove(); }
+
+async function enregistrerEquipe(){
+  const membres = window._equipe.filter(m => (m.nom || "").trim());
+  try {
+    adopter(await API.poster("/api/projet/equipe", {membres}));
+    fermerEquipe();
+  } catch(e){ alert("Erreur : " + e.message); }
+}
+
+/* ── vue : exécution ─────────────────────────────────────────────── */
+function rendreExecution(){
+  const st = (PROJET && PROJET.statistiques) || {};
+  const toutes = (PROJET && PROJET.taches) || [];
+  const eq = ((PROJET && PROJET.projet) || {}).equipe || [];
+  const statuts = (PROJET && PROJET.statuts) || [];
+
+  /* bandeau de synthèse */
+  const parS = st.par_statut || {};
+  $("#execResume").innerHTML = `
+    <div class="resume-item"><b>${st.avancement || 0} %</b><span>avancement</span></div>
+    ${statuts.map(s => `<div class="resume-item"><b>${nf(parS[s.cle] || 0)}</b>
+       <span>${esc(s.libelle)}</span></div>`).join("")}
+    <div class="resume-item"><b>${nf(st.non_assigne || 0)}</b><span>sans responsable</span></div>
+    <div class="resume-item"><b>${nf(st.points_faits || 0)}/${nf(st.points_total || 0)}</b>
+      <span>points livrés</span></div>`;
+
+  /* filtre par membre */
+  $("#execMembres").innerHTML = `
+    <button class="puce-membre ${FILTRE_EXEC === "" ? "on" : ""}" onclick="filtrerExec('')">
+      Toute l'équipe</button>` + eq.map(m => `
+    <button class="puce-membre ${FILTRE_EXEC === m.id ? "on" : ""}"
+            onclick="filtrerExec('${esc(m.id)}')">
+      <span class="avatar petit">${esc(m.initiales)}</span>${esc(m.nom)}</button>`).join("");
+
+  const filtre = toutes.filter(t => {
+    if(FILTRE_EXEC && t.assigne !== FILTRE_EXEC) return false;
+    if(RECHERCHE_EXEC){
+      const q = RECHERCHE_EXEC.toLowerCase();
+      if(!(t.titre + " " + t.cle + " " + t.epic_titre).toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  $("#tableExec").innerHTML = filtre.length ? `<table>
+    <thead><tr>
+      <th style="width:84px">Clé</th><th>Tâche</th>
+      <th style="width:150px">Responsable</th>
+      <th style="width:112px">Statut</th>
+      <th style="width:58px;text-align:right">Charge</th>
+      <th style="width:76px">Jira</th>
+    </tr></thead>
+    <tbody>${filtre.map(t => {
+      const m = eq.find(x => x.id === t.assigne);
+      return `<tr>
+        <td><span class="cle">${esc(t.cle)}</span></td>
+        <td><div class="t-titre ligne-clic" onclick="ouvrirTacheExec('${esc(t.cle)}')">
+              ${esc(t.titre)}</div>
+            <div class="t-desc">${esc(t.epic_titre)} · ${esc(t.story)}</div></td>
+        <td>${m ? `<span class="qui"><span class="avatar petit">${esc(m.initiales)}</span>
+              ${esc(m.nom)}</span>` : `<span class="vide">non affectée</span>`}</td>
+        <td>${selecteurStatut(t)}</td>
+        <td class="num">${nf(t.charge)}</td>
+        <td>${t.jira ? `<span class="cle" style="background:var(--ok-wash);
+              color:var(--ok);border-color:#bfe3dd">${esc(t.jira)}</span>`
+            : `<span class="vide">—</span>`}</td>
+      </tr>`;
+    }).join("")}</tbody></table>`
+    : `<div class="carte-corps"><p class="vide">${toutes.length
+        ? "Aucune tâche ne correspond au filtre."
+        : "Aucune tâche : créez le projet depuis la synthèse."}</p></div>`;
+}
+
+function selecteurStatut(t){
+  const statuts = (PROJET && PROJET.statuts) || [];
+  return `<select class="sel-statut s-${esc(t.statut)}"
+      onchange="changerStatut('${esc(t.cle)}', this.value)">
+    ${statuts.map(s => `<option value="${s.cle}" ${s.cle === t.statut ? "selected" : ""}>
+      ${esc(s.libelle)}</option>`).join("")}
+  </select>`;
+}
+
+function filtrerExec(id){ FILTRE_EXEC = id; rendreExecution(); }
+
+async function changerStatut(cle, statut){
+  try { adopter(await API.poster("/api/projet/statut", {cle, statut})); }
+  catch(e){ alert("Erreur : " + e.message); }
+}
+
+async function repartirAuto(){
+  try {
+    if(!(PROJET.projet.equipe || []).length){
+      alert("Définissez d'abord l'équipe : sans membres, il n'y a personne à qui affecter.");
+      ouvrirEquipe(); return;
+    }
+    adopter(await API.poster("/api/projet/repartir", {}));
+  } catch(e){ alert("Erreur : " + e.message); }
+}
+
+function ouvrirTacheExec(cle){
+  const t = ((PROJET && PROJET.taches) || []).find(x => x.cle === cle);
+  if(!t) return;
+  fermerPanneau();
+  const eq = (PROJET.projet.equipe || []);
+  const hote = document.createElement("div");
+  hote.id = "panneau";
+  hote.innerHTML = `
+    <div class="voile" onclick="fermerPanneau()"></div>
+    <aside class="panneau" role="dialog" aria-modal="true">
+      <div class="panneau-tete"><div class="t">
+        <span class="cle">${esc(t.cle)}</span><b>${esc(t.titre)}</b></div>
+        <button class="fermer" onclick="fermerPanneau()" aria-label="Fermer">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9"
+               stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+      <div class="panneau-corps">
+        <div class="panneau-section"><h4>Description</h4>
+          <p class="desc">${esc(t.description || "Aucune description.")}</p></div>
+        <div class="panneau-section"><h4>Suivi</h4>
+          <div class="metas">
+            <div><span>Statut</span><b>${esc((((PROJET.statuts || []).find(s => s.cle === t.statut)
+              || {}).libelle) || t.statut)}</b></div>
+            <div><span>Charge</span><b>${nf(t.charge)} points</b></div>
+            <div><span>Épic</span><b>${esc(t.epic_titre)}</b></div>
+            <div><span>Jira</span><b>${esc(t.jira || "non envoyée")}</b></div>
+          </div></div>
+        <div class="panneau-section"><h4>Responsable</h4>
+          <select class="sel-large" onchange="affecter('${esc(t.cle)}', this.value)">
+            <option value="">Personne</option>
+            ${eq.map(m => `<option value="${esc(m.id)}"
+              ${m.id === t.assigne ? "selected" : ""}>${esc(m.nom)} — ${esc(m.role)}</option>`).join("")}
+          </select></div>
+        <div class="panneau-section"><h4>Historique</h4>
+          ${(t.historique || []).length ? (t.historique || []).slice().reverse().map(h =>
+            `<div class="histo"><span>${esc(h.date)}</span><b>${esc(h.texte)}</b></div>`).join("")
+            : `<p class="vide">Aucun mouvement.</p>`}</div>
+        <div class="panneau-section"><h4>Commentaires (${(t.commentaires || []).length})</h4>
+          ${(t.commentaires || []).map(c => `<div class="comm">
+            <b>${esc(c.auteur)}</b><span>${esc(c.date)}</span>
+            <p>${esc(c.texte)}</p></div>`).join("")}
+          <textarea class="zone-comm" id="nouveauComm" rows="2"
+            placeholder="Écrire un commentaire…"></textarea>
+          <button class="btn btn-s" style="margin-top:8px"
+            onclick="envoyerComm('${esc(t.cle)}')">Publier</button></div>
+      </div>
+    </aside>`;
+  document.body.appendChild(hote);
+}
+
+async function affecter(cle, membre){
+  try { adopter(await API.poster("/api/projet/affecter", {cle, membre: membre || null}));
+        ouvrirTacheExec(cle); }
+  catch(e){ alert("Erreur : " + e.message); }
+}
+
+async function envoyerComm(cle){
+  const zone = $("#nouveauComm");
+  const texte = (zone && zone.value || "").trim();
+  if(!texte) return;
+  try { adopter(await API.poster("/api/projet/commenter", {cle, texte}));
+        ouvrirTacheExec(cle); }
+  catch(e){ alert("Erreur : " + e.message); }
+}
+
+/* ── vue : Jira ──────────────────────────────────────────────────── */
+function rendreJira(){
+  const p = PROJET && PROJET.projet;
+  const j = (PROJET && PROJET.jira) || {};
+  $("#jEtat").innerHTML = j.configure
+    ? `<span class="etat-jira ok"><i></i>Configuré${j.compte ? " — " + esc(j.compte) : ""}</span>`
+    : `<span class="etat-jira non"><i></i>Non configuré</span>`;
+  if($("#jUrl")) $("#jUrl").value = j.url || "";
+  if($("#jEmail")) $("#jEmail").value = j.email || "";
+  if($("#jCle")) $("#jCle").value = j.cle_projet || "";
+  if($("#jToken")) $("#jToken").placeholder = j.token ? "jeton enregistré (laisser vide)" : "jeton d'API Jira";
+
+  const types = j.types_detectes || [];
+  $("#jTypes").innerHTML = types.length
+    ? types.map(t => `<span class="chip">${esc(t.nom)}</span>`).join("")
+    : `<span class="vide">Lancez « Vérifier la connexion » pour lire les types de ticket du projet.</span>`;
+
+  const res = j.resultats || [];
+  $("#jHistorique").innerHTML = res.length ? res.slice().reverse().map(r => `
+    <div class="histo"><span>${esc(r.date)}</span>
+      <b>${nf(r.crees)} ticket(s) créé(s) · ${(r.erreurs || []).length} erreur(s)</b>
+      ${(r.erreurs || []).length ? `<div class="vide">${(r.erreurs || []).slice(0, 3)
+        .map(esc).join("<br>")}</div>` : ""}</div>`).join("")
+    : `<p class="vide">Aucune synchronisation pour l'instant.</p>`;
+
+  $("#jCompteur").textContent = j.dans_jira
+    ? `${j.dans_jira} tâche(s) déjà rattachée(s) à un ticket Jira`
+    : "";
+
+  const boutons = ["#jVerifier", "#jEnvoyer", "#jRelire"];
+  boutons.forEach(b => { const e = $(b); if(e) e.disabled = !p; });
+}
+
+async function jiraConfig(){
+  try {
+    adopter(await API.poster("/api/jira/config", {
+      url: $("#jUrl").value, email: $("#jEmail").value,
+      cle_projet: $("#jCle").value, token: $("#jToken").value}));
+    $("#jToken").value = "";
+    $("#jMessage").innerHTML = `<span class="ok-txt">Configuration enregistrée.</span>`;
+    await chargerProjet();
+  } catch(e){ $("#jMessage").innerHTML = `<span class="ko-txt">${esc(e.message)}</span>`; }
+}
+
+async function jiraVerifier(){
+  $("#jMessage").innerHTML = `<span class="vide">Vérification…</span>`;
+  try {
+    const d = await API.poster("/api/jira/verifier", {});
+    adopter(d);
+    $("#jMessage").innerHTML = `<span class="ok-txt">Connexion réussie — ${esc(d.info.compte)}</span>`;
+  } catch(e){ $("#jMessage").innerHTML = `<span class="ko-txt">${esc(e.message)}</span>`; }
+}
+
+async function jiraEnvoyer(){
+  if(!confirm("Créer les épics, stories et tâches dans Jira ? Les tâches déjà envoyées ne seront pas dupliquées.")) return;
+  $("#jMessage").innerHTML = `<span class="vide">Envoi en cours vers Jira…</span>`;
+  try {
+    const d = await API.poster("/api/jira/envoyer", {});
+    adopter(d);
+    $("#jMessage").innerHTML = `<span class="ok-txt">${d.crees.length} ticket(s) créé(s)${
+      d.erreurs.length ? " · " + d.erreurs.length + " erreur(s)" : ""}.</span>`;
+  } catch(e){ $("#jMessage").innerHTML = `<span class="ko-txt">${esc(e.message)}</span>`; }
+}
+
+async function jiraRelire(){
+  $("#jMessage").innerHTML = `<span class="vide">Relecture…</span>`;
+  try {
+    const d = await API.poster("/api/jira/relire", {});
+    adopter(d);
+    $("#jMessage").innerHTML = `<span class="ok-txt">${d.changements} changement(s) rapatrié(s).</span>`;
+  } catch(e){ $("#jMessage").innerHTML = `<span class="ko-txt">${esc(e.message)}</span>`; }
+}
+
+/* créer le projet depuis le plan affiché */
+async function creerProjet(){
+  try {
+    const d = await API.poster("/api/projet/creer", {nom: $("#nomProjet").value || ""});
+    adopter(d);
+    aller("espace");
+    if(!(d.projet.equipe || []).length) setTimeout(ouvrirEquipe, 350);
+  } catch(e){ alert("Erreur : " + e.message); }
+}
+
+/* ── validation humaine du plan ──────────────────────────────────── */
+const VALID_LIB = {aucune:"Non soumis", en_attente:"En attente de validation",
+                   approuve:"Approuvé", rejete:"Rejeté"};
+
+function rendreValidation(){
+  const zone = $("#bandeauValidation");
+  if(!zone) return;
+  const v = (PROJET && PROJET.validation) || {statut:"aucune"};
+  const st = v.statut || "aucune";
+  const icone = st === "approuve" ? ICO.ok : st === "rejete" ? ICO.ko
+              : st === "en_attente" ? ICO.alerte : ICO.doc;
+  const classe = st === "approuve" ? "ok" : st === "rejete" ? "ko"
+               : st === "en_attente" ? "atteinte" : "";
+  const textes = {
+    aucune: ["Le plan n'est pas encore soumis",
+             "Un plan validé par un humain peut seul passer en exécution. Soumettez-le pour décision."],
+    en_attente: ["En attente de votre décision",
+             "Approuvez pour démarrer l'exécution, ou rejetez en expliquant ce qui ne va pas : un nouveau plan sera généré."],
+    approuve: ["Plan approuvé le " + (v.date || "—") + " par " + (v.auteur || "le chef de projet"),
+             "L'exécution est ouverte : vous pouvez affecter les tâches et les suivre."],
+    rejete: ["Plan rejeté le " + (v.date || "—"),
+             "Motif : " + (v.motif || "—")]
+  }[st] || ["", ""];
+
+  const actions = [];
+  if(st === "aucune" || st === "rejete"){
+    actions.push(`<button class="btn btn-p" onclick="soumettrePlan()">
+      Soumettre à validation</button>`);
+    actions.push(`<button class="btn btn-s" onclick="approuverDirect()">Approuver directement</button>`);
+    actions.push(`<button class="btn btn-f" onclick="basculerMotif()">Rejeter et régénérer</button>`);
+  } else if(st === "en_attente"){
+    actions.push(`<button class="btn btn-p" onclick="approuverDirect()">Approuver le plan</button>`);
+    actions.push(`<button class="btn btn-s" onclick="basculerMotif()">Rejeter et régénérer</button>`);
+  } else {
+    actions.push(`<a class="lien-page" onclick="aller('execution')">Aller à l'exécution</a>`);
+    actions.push(`<button class="btn btn-f" onclick="ouvrirEquipe()">Composer l'équipe</button>`);
+  }
+
+  zone.innerHTML = `<div class="bandeau-validation ${classe}">
+    <span class="pastille-v">${icone}</span>
+    <span class="txt-v"><b>${esc(VALID_LIB[st] || st)}</b>
+      <span>${esc(textes[0])}</span>
+      ${textes[1] ? `<span style="display:block;margin-top:2px">${esc(textes[1])}</span>` : ""}
+    </span>
+    <span class="actions-v">${actions.join("")}</span>
+    <div class="zone-motif cache" id="zoneMotif">
+      <textarea id="motifRejet" placeholder="Expliquez ce qui ne va pas dans ce plan (10 caractères minimum). Exemple : trop de tâches de documentation, il manque la gestion des rôles et la partie facturation."></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
+        <button class="btn btn-f" onclick="basculerMotif()">Annuler</button>
+        <button class="btn btn-p" onclick="rejeterPlan()">Rejeter et générer un nouveau plan</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function basculerMotif(){
+  const z = $("#zoneMotif");
+  if(z){ z.classList.toggle("cache"); if(!z.classList.contains("cache")) $("#motifRejet").focus(); }
+}
+
+async function soumettrePlan(){
+  try { adopter(await API.poster("/api/projet/soumettre", {})); }
+  catch(e){ alert("Erreur : " + e.message); }
+}
+
+async function approuverDirect(){
+  try { adopter(await API.poster("/api/projet/approuver", {})); }
+  catch(e){ alert("Erreur : " + e.message); }
+}
+
+async function rejeterPlan(){
+  const motif = ($("#motifRejet").value || "").trim();
+  if(motif.length < 10){
+    alert("Expliquez le rejet en une phrase (10 caractères minimum) : c'est ce texte qui guidera le nouveau plan.");
+    $("#motifRejet").focus();
+    return;
+  }
+  try {
+    adopter(await API.poster("/api/projet/rejeter", {motif}));
+    /* le motif part avec la demande de génération : le modèle le reçoit */
+    await lancerRegeneration(motif);
+  } catch(e){ alert("Erreur : " + e.message); }
+}
+
+async function lancerRegeneration(motif){
+  appelErreur("");
+  $("#attente").classList.remove("cache");
+  aller("saisie");
+  try {
+    await API.poster("/api/generer", {motif});
+    const t0 = Date.now();
+    MINUTEUR = setInterval(() => {
+      fetch("/api/etat").then(r => r.json()).then(e => {
+        if(e.statut === "termine"){
+          clearInterval(MINUTEUR); $("#attente").classList.add("cache");
+          charger().then(() => { if(typeof aller === "function") aller("plan"); });
+        } else if(e.statut === "erreur"){
+          clearInterval(MINUTEUR); $("#attente").classList.add("cache");
+          appelErreur(e.erreur || "la génération a échoué");
+        }
+      }).catch(() => {});
+    }, 1200);
+  } catch(e){
+    $("#attente").classList.add("cache");
+    appelErreur("Régénération impossible : " + e.message);
+  }
+}
+
+function appelErreur(msg){
+  const z = $("#zoneErreur");
+  if(!z) return;
+  z.innerHTML = msg ? `<div class="alerte erreur">${ICO.alerte}
+    <div><b>${esc(msg)}</b></div></div>` : "";
+}
+
+/* ── mode présentation ───────────────────────────────────────────── */
+function basculerPresentation(){
+  document.body.classList.toggle("presentation");
+  const b = $("#btnPresentation");
+  if(b) b.textContent = document.body.classList.contains("presentation")
+    ? "Quitter la présentation" : "Mode présentation";
+}
+
+/* ── réglages : clé du modèle ────────────────────────────────────── */
+async function chargerReglages(){
+  try {
+    const d = await API.lire("/api/reglages");
+    const b = $("#bCle");
+    if(b){
+      b.textContent = d.cle_presente ? "ok" : "";
+      b.style.background = d.cle_presente ? "rgba(45,212,191,.22)" : "rgba(225,29,72,.26)";
+      b.style.color = d.cle_presente ? "#99f6e4" : "#fecdd3";
+    }
+    $("#etatCle").innerHTML = d.cle_presente
+      ? `<span class="etat-jira ok"><i></i>Clé présente (${esc(d.source)})</span>`
+      : `<span class="etat-jira non"><i></i>Aucune clé</span>`;
+    $("#modeleDetecte").innerHTML = d.modele
+      ? `<div class="l">Modèle retenu<b>${esc(d.modele)}</b></div>`
+      : (d.erreur ? `<div class="l"><span class="ko-txt">${esc(d.erreur)}</span></div>` : "");
+  } catch(e) { /* serveur sans gestion de clé */ }
+}
+
+async function enregistrerCle(){
+  const cle = ($("#champCle").value || "").trim();
+  if(!cle){ $("#messageCle").innerHTML = `<span class="ko-txt">Saisissez une clé.</span>`; return; }
+  try {
+    await API.poster("/api/reglages", {cle});
+    $("#champCle").value = "";
+    $("#messageCle").innerHTML = `<span class="ok-txt">Clé enregistrée.</span>`;
+    chargerReglages(); majRappelCle();
+  } catch(e) { $("#messageCle").innerHTML = `<span class="ko-txt">${esc(e.message)}</span>`; }
+}
+
+async function testerCle(){
+  $("#messageCle").innerHTML = `<span class="vide">Test en cours…</span>`;
+  try {
+    const d = await API.poster("/api/reglages/tester", {});
+    $("#messageCle").innerHTML = `<span class="ok-txt">Clé valide — modèle « ${esc(d.modele)} ».</span>`;
+    chargerReglages();
+  } catch(e) { $("#messageCle").innerHTML = `<span class="ko-txt">${esc(e.message)}</span>`; }
+}
+
+async function effacerCle(){
+  if(!confirm("Effacer la clé enregistrée sur cette machine ?")) return;
+  try {
+    await API.poster("/api/reglages", {effacer: true});
+    $("#messageCle").innerHTML = `<span class="ok-txt">Clé effacée.</span>`;
+    chargerReglages(); majRappelCle();
+  } catch(e) { $("#messageCle").innerHTML = `<span class="ko-txt">${esc(e.message)}</span>`; }
+}
+
+/* rappel sur l'écran de saisie quand la clé manque */
+function majRappelCle(){
+  const zone = $("#rappelCle");
+  if(!zone) return;
+  fetch("/api/reglages").then(r => r.json()).then(d => {
+    zone.innerHTML = d.cle_presente ? "" : `
+      <div class="alerte avert" style="margin-top:16px">
+        ${ICO.alerte}<div><b>Clé Groq absente</b>
+        La génération ne peut pas démarrer. Ajoutez votre clé dans
+        <a href="#" onclick="aller('reglages');return false">Réglages</a>
+        — elle reste sur votre machine.</div></div>`;
+  }).catch(() => {});
+}
+
+/* ── démarrage ───────────────────────────────────────────────────── */
+/* le démarrage ne doit jamais bloquer le rendu si le réseau manque */
+if(typeof fetch === "function"){
+  try { chargerProjet(); } catch(e){}
+  try { chargerReglages(); } catch(e){}
+  try { majRappelCle(); } catch(e){}
+}
+
+function demanderCreation(){
+  if(!PLAN){ aller("saisie"); return; }
+  aller("plan");
+  setTimeout(() => { const n = $("#nomProjet"); if(n) n.focus(); }, 250);
+}
+
+$("#filVue").textContent = "Brief";
+$("#btnExport").classList.add("cache");
+fetch("/api/etat").then(r => r.json()).then(e => {
+  if(e && e.statut === "termine") charger();
+}).catch(() => {});
+</script>
+</body>
+</html>

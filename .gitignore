@@ -1,0 +1,3 @@
+.env
+service_modele/modele/model_bundle.joblib
+donnees/reglages.json

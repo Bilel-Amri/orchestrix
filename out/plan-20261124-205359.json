@@ -1,0 +1,2583 @@
+{
+  "plan": {
+    "epics": [
+      {
+        "title": "Socle technique et infrastructure",
+        "description": "Mise en place de l'environnement de développement, de la base de données et du pipeline CI/CD.",
+        "stories": [
+          {
+            "cle": "TF-1.1",
+            "title": "Environnement de développement",
+            "as_a": "développeur",
+            "i_want": "disposer d'un environnement local cohérent avec la production",
+            "so_that": "je peux développer et tester sans divergences",
+            "acceptance": [
+              "L'environnement local utilise les mêmes versions de Node.js et de la base de données que la production",
+              "Un script d'installation configure automatiquement toutes les dépendances"
+            ],
+            "tasks": [
+              {
+                "title": "Définir le Dockerfile de l'application",
+                "description": "Créer un Dockerfile incluant Node.js, les variables d'environnement et les dépendances",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "environnement-de-develop"
+                ],
+                "cle": "TF-1",
+                "chemin": "TF-1.1.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Configurer docker‑compose pour les services (app, DB)",
+                "description": "Décrire les services, les réseaux et les volumes dans docker‑compose.yml",
+                "sources": [],
+                "type": "config",
+                "priorite": "Basse",
+                "criteres": [
+                  "La configuration est reproductible sur un environnement neuf",
+                  "Elle est documentée et versionnée",
+                  "Un déploiement de bout en bout réussit"
+                ],
+                "labels": [
+                  "config",
+                  "environnement-de-develop"
+                ],
+                "cle": "TF-2",
+                "chemin": "TF-1.1.2",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Rédiger la documentation d'installation locale",
+                "description": "Écrire un README avec les étapes d'installation et de lancement",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "environnement-de-develop"
+                ],
+                "cle": "TF-3",
+                "chemin": "TF-1.1.3",
+                "complexite_classe": "Faible"
+              }
+            ]
+          },
+          {
+            "cle": "TF-1.2",
+            "title": "Base de données",
+            "as_a": "administrateur",
+            "i_want": "déployer une base de données MongoDB sécurisée",
+            "so_that": "les données des membres et des prêts sont persistées de façon fiable",
+            "acceptance": [
+              "La base de données est provisionnée avec un compte admin et un compte en lecture‑écriture limité",
+              "Les sauvegardes automatiques sont planifiées quotidiennement"
+            ],
+            "tasks": [
+              {
+                "title": "Créer le schéma MongoDB pour les utilisateurs, livres et prêts",
+                "description": "Définir les collections et les index nécessaires",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "base-de-donnees"
+                ],
+                "cle": "TF-4",
+                "chemin": "TF-1.2.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Configurer les sauvegardes quotidiennes vers iCloud Drive",
+                "description": "Mettre en place un script de dump et de transfert vers iCloud",
+                "sources": [
+                  5
+                ],
+                "type": "config",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "La configuration est reproductible sur un environnement neuf",
+                  "Elle est documentée et versionnée",
+                  "Un déploiement de bout en bout réussit"
+                ],
+                "labels": [
+                  "config",
+                  "base-de-donnees"
+                ],
+                "cle": "TF-5",
+                "chemin": "TF-1.2.2",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Documenter le modèle de données",
+                "description": "Rédiger un diagramme ER et une description des collections",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "base-de-donnees"
+                ],
+                "cle": "TF-6",
+                "chemin": "TF-1.2.3",
+                "complexite_classe": "Faible"
+              }
+            ]
+          },
+          {
+            "cle": "TF-1.3",
+            "title": "Pipeline CI/CD",
+            "as_a": "développeur",
+            "i_want": "automatiser les tests et le déploiement",
+            "so_that": "les nouvelles versions sont livrées rapidement et sans régression",
+            "acceptance": [
+              "Le pipeline exécute les tests unitaires et d'intégration à chaque push",
+              "Le déploiement en staging se fait automatiquement après succès du pipeline"
+            ],
+            "tasks": [
+              {
+                "title": "Créer les workflows GitHub Actions",
+                "description": "Définir les jobs de lint, test, build et déploiement",
+                "sources": [],
+                "type": "config",
+                "priorite": "Basse",
+                "criteres": [
+                  "La configuration est reproductible sur un environnement neuf",
+                  "Elle est documentée et versionnée",
+                  "Un déploiement de bout en bout réussit"
+                ],
+                "labels": [
+                  "config",
+                  "pipeline-ci/cd"
+                ],
+                "cle": "TF-7",
+                "chemin": "TF-1.3.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Intégrer les tests de sécurité OWASP ZAP",
+                "description": "Ajouter un job qui lance ZAP contre l'application en staging",
+                "sources": [
+                  14,
+                  16,
+                  19
+                ],
+                "type": "test",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "Le scénario de test de « Intégrer les tests de sécurité OWASP ZAP » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "pipeline-ci/cd"
+                ],
+                "cle": "TF-8",
+                "chemin": "TF-1.3.2",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Rédiger le guide de déploiement",
+                "description": "Documenter les étapes manuelles éventuelles et les variables d'environnement",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "pipeline-ci/cd"
+                ],
+                "cle": "TF-9",
+                "chemin": "TF-1.3.3",
+                "complexite_classe": "Faible"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Gestion des utilisateurs et des accès",
+        "description": "Gestion des profils, authentification, rôles et photos de profil.",
+        "stories": [
+          {
+            "cle": "TF-2.1",
+            "title": "Inscription et profils utilisateurs",
+            "as_a": "élève ou enseignant",
+            "i_want": "m'inscrire et gérer mon profil avec photo",
+            "so_that": "je peux accéder aux services de la bibliothèque",
+            "acceptance": [
+              "Le formulaire d'inscription collecte nom, email, rôle et photo",
+              "La photo est stockée et affichée dans le profil"
+            ],
+            "tasks": [
+              {
+                "title": "Développer le formulaire d'inscription",
+                "description": "Implémenter le front‑end et le endpoint d'inscription",
+                "sources": [
+                  1
+                ],
+                "type": "dev",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "inscription-et-profils-u"
+                ],
+                "cle": "TF-10",
+                "chemin": "TF-2.1.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Stocker les photos dans le bucket iCloud",
+                "description": "Uploader les images et enregistrer l'URL dans le profil",
+                "sources": [
+                  5
+                ],
+                "type": "dev",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "inscription-et-profils-u"
+                ],
+                "cle": "TF-11",
+                "chemin": "TF-2.1.2",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Écrire la documentation d'auto‑inscription",
+                "description": "Décrire le processus d'inscription et les formats d'image acceptés",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "inscription-et-profils-u"
+                ],
+                "cle": "TF-12",
+                "chemin": "TF-2.1.3",
+                "complexite_classe": "Faible"
+              }
+            ]
+          },
+          {
+            "cle": "TF-2.2",
+            "title": "Authentification et gestion des rôles",
+            "as_a": "bibliothécaire",
+            "i_want": "gérer les droits d'accès selon les rôles",
+            "so_that": "les utilisateurs ne voient que les fonctionnalités qui leur sont autorisées",
+            "acceptance": [
+              "Le système utilise JWT avec expiration",
+              "Les rôles (élève, enseignant, bibliothécaire, admin) sont vérifiés à chaque requête"
+            ],
+            "tasks": [
+              {
+                "title": "Implémenter l'authentification JWT",
+                "description": "Créer les endpoints login / logout et la génération de token",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "authentification-et-gest"
+                ],
+                "cle": "TF-13",
+                "chemin": "TF-2.2.1",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Définir la matrice des permissions par rôle",
+                "description": "Spécifier les routes accessibles pour chaque rôle",
+                "sources": [],
+                "type": "design",
+                "priorite": "Basse",
+                "criteres": [
+                  "La maquette est validée par le demandeur",
+                  "Les états vide, erreur et chargement sont représentés"
+                ],
+                "labels": [
+                  "design",
+                  "authentification-et-gest"
+                ],
+                "cle": "TF-14",
+                "chemin": "TF-2.2.2",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Ajouter les contrôles d'accès (OWASP A01)",
+                "description": "Vérifier que chaque endpoint applique la vérification de rôle",
+                "sources": [
+                  14,
+                  15
+                ],
+                "type": "securite",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le contrôle est effectif sur tous les points d'entrée",
+                  "Un test dédié prouve que l'accès non autorisé échoue",
+                  "Le comportement est journalisé"
+                ],
+                "labels": [
+                  "securite",
+                  "authentification-et-gest"
+                ],
+                "cle": "TF-15",
+                "chemin": "TF-2.2.3",
+                "complexite_classe": "Moyenne"
+              }
+            ]
+          },
+          {
+            "cle": "TF-2.3",
+            "title": "Gestion des photos de profil",
+            "as_a": "utilisateur",
+            "i_want": "mettre à jour ma photo de profil depuis ma galerie iPhone",
+            "so_that": "mon compte reflète mon identité visuelle",
+            "acceptance": [
+              "L'utilisateur peut choisir une image depuis son appareil",
+              "L'image est redimensionnée à 256x256 px avant stockage"
+            ],
+            "tasks": [
+              {
+                "title": "Intégrer le sélecteur de fichiers mobile",
+                "description": "Utiliser l'API HTML5 pour accéder à la galerie iPhone",
+                "sources": [
+                  1
+                ],
+                "type": "dev",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "gestion-des-photos-de-pr"
+                ],
+                "cle": "TF-16",
+                "chemin": "TF-2.3.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Redimensionner et compresser l'image côté serveur",
+                "description": "Appliquer Sharp ou équivalent pour normaliser les photos",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "gestion-des-photos-de-pr"
+                ],
+                "cle": "TF-17",
+                "chemin": "TF-2.3.2",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Mettre à jour l'interface du profil avec la nouvelle image",
+                "description": "Afficher la photo mise à jour sans rechargement complet",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "gestion-des-photos-de-pr"
+                ],
+                "cle": "TF-18",
+                "chemin": "TF-2.3.3",
+                "complexite_classe": "Faible"
+              }
+            ]
+          },
+          {
+            "cle": "TF-2.4",
+            "title": "Réinitialisation du mot de passe",
+            "as_a": "utilisateur",
+            "i_want": "recevoir un lien de réinitialisation sécurisé",
+            "so_that": "je peux regagner l'accès à mon compte en cas d'oubli",
+            "acceptance": [
+              "Le lien envoyé est valable 24 h et à usage unique",
+              "Le token du lien est crypté et stocké de façon sécurisée"
+            ],
+            "tasks": [
+              {
+                "title": "Créer le endpoint de demande de réinitialisation",
+                "description": "Générer un token sécurisé et l'envoyer par email",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "reinitialisation-du-mot-"
+                ],
+                "cle": "TF-19",
+                "chemin": "TF-2.4.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Implémenter la page de saisie du nouveau mot de passe",
+                "description": "Valider le token et mettre à jour le hash du mot de passe",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "reinitialisation-du-mot-"
+                ],
+                "cle": "TF-20",
+                "chemin": "TF-2.4.2",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Appliquer les bonnes pratiques cryptographiques (OWASP A02)",
+                "description": "Utiliser bcrypt avec un facteur de coût adéquat",
+                "sources": [
+                  16
+                ],
+                "type": "securite",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le contrôle est effectif sur tous les points d'entrée",
+                  "Un test dédié prouve que l'accès non autorisé échoue",
+                  "Le comportement est journalisé"
+                ],
+                "labels": [
+                  "securite",
+                  "reinitialisation-du-mot-"
+                ],
+                "cle": "TF-21",
+                "chemin": "TF-2.4.3",
+                "complexite_classe": "Moyenne"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Catalogue partagé et gestion des livres",
+        "description": "Création, recherche, import/export et sauvegarde du catalogue de livres.",
+        "stories": [
+          {
+            "cle": "TF-3.1",
+            "title": "Création et édition des fiches livres",
+            "as_a": "bibliothécaire",
+            "i_want": "ajouter ou modifier les informations d'un livre",
+            "so_that": "le catalogue reste à jour pour les usagers",
+            "acceptance": [
+              "Chaque fiche contient titre, auteur, ISBN, catégorie et disponibilité",
+              "Les modifications sont immédiatement visibles dans le catalogue"
+            ],
+            "tasks": [
+              {
+                "title": "Développer le formulaire d'ajout/édition de livre",
+                "description": "Front‑end et API REST pour créer ou mettre à jour une fiche",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "creation-et-edition-des-"
+                ],
+                "cle": "TF-22",
+                "chemin": "TF-3.1.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Valider les champs (ISBN, date, etc.) côté serveur",
+                "description": "Implémenter les règles de validation et retourner les erreurs",
+                "sources": [],
+                "type": "test",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le scénario de test de « Valider les champs (ISBN, date, etc.) côté serveur » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "creation-et-edition-des-"
+                ],
+                "cle": "TF-23",
+                "chemin": "TF-3.1.2",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Documenter le modèle de donnée du livre",
+                "description": "Spécifier le schéma JSON et les contraintes",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "creation-et-edition-des-"
+                ],
+                "cle": "TF-24",
+                "chemin": "TF-3.1.3",
+                "complexite_classe": "Moyenne"
+              }
+            ]
+          },
+          {
+            "cle": "TF-3.2",
+            "title": "Recherche et navigation dans le catalogue",
+            "as_a": "élève",
+            "i_want": "rechercher des livres par titre, auteur ou catégorie",
+            "so_that": "je trouve rapidement le livre qui m'intéresse",
+            "acceptance": [
+              "La recherche accepte des mots‑clés partiels",
+              "Les résultats sont triés par pertinence et disponibilité"
+            ],
+            "tasks": [
+              {
+                "title": "Implémenter l'API de recherche avec filtres",
+                "description": "Utiliser MongoDB text index pour la recherche plein texte",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "recherche-et-navigation-"
+                ],
+                "cle": "TF-25",
+                "chemin": "TF-3.2.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Créer l'interface de recherche avec suggestions",
+                "description": "Affichage dynamique des résultats au fur et à mesure de la saisie",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "recherche-et-navigation-"
+                ],
+                "cle": "TF-26",
+                "chemin": "TF-3.2.2",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Tester les cas d'injection (OWASP A03)",
+                "description": "Vérifier que les paramètres de recherche sont correctement échappés",
+                "sources": [
+                  13,
+                  17
+                ],
+                "type": "securite",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le contrôle est effectif sur tous les points d'entrée",
+                  "Un test dédié prouve que l'accès non autorisé échoue",
+                  "Le comportement est journalisé"
+                ],
+                "labels": [
+                  "securite",
+                  "recherche-et-navigation-"
+                ],
+                "cle": "TF-27",
+                "chemin": "TF-3.2.3",
+                "complexite_classe": "Moyenne"
+              }
+            ]
+          },
+          {
+            "cle": "TF-3.3",
+            "title": "Import/Export du catalogue au format CSV",
+            "as_a": "administrateur scolaire",
+            "i_want": "exporter le catalogue en CSV et importer un CSV fourni",
+            "so_that": "je peux synchroniser les données avec d'autres systèmes",
+            "acceptance": [
+              "L'export génère un fichier CSV conforme aux colonnes standards",
+              "L'import valide le format et signale les lignes erronées"
+            ],
+            "tasks": [
+              {
+                "title": "Développer la fonction d'export CSV",
+                "description": "Transformer les documents MongoDB en flux CSV",
+                "sources": [
+                  6
+                ],
+                "type": "dev",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "import/export-du-catalog"
+                ],
+                "cle": "TF-28",
+                "chemin": "TF-3.3.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Créer le module d'import CSV avec validation",
+                "description": "Lire le fichier, valider chaque ligne et insérer les livres",
+                "sources": [
+                  6
+                ],
+                "type": "dev",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "import/export-du-catalog"
+                ],
+                "cle": "TF-29",
+                "chemin": "TF-3.3.2",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Rédiger la documentation d'import/export",
+                "description": "Expliquer le format attendu et les étapes d'utilisation",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "import/export-du-catalog"
+                ],
+                "cle": "TF-30",
+                "chemin": "TF-3.3.3",
+                "complexite_classe": "Moyenne"
+              }
+            ]
+          },
+          {
+            "cle": "TF-3.4",
+            "title": "Sauvegarde du catalogue sur iCloud Drive",
+            "as_a": "bibliothécaire",
+            "i_want": "sauvegarder automatiquement le catalogue sur iCloud",
+            "so_that": "les données sont protégées contre la perte",
+            "acceptance": [
+              "Une sauvegarde quotidienne est créée et stockée dans le dossier iCloud dédié",
+              "En cas de restauration, le catalogue peut être réimporté depuis le backup"
+            ],
+            "tasks": [
+              {
+                "title": "Planifier un job de dump du catalogue vers iCloud",
+                "description": "Utiliser un cron ou un GitHub Action pour déclencher le backup",
+                "sources": [
+                  5
+                ],
+                "type": "config",
+                "priorite": "Haute",
+                "criteres": [
+                  "La configuration est reproductible sur un environnement neuf",
+                  "Elle est documentée et versionnée",
+                  "Un déploiement de bout en bout réussit"
+                ],
+                "labels": [
+                  "config",
+                  "sauvegarde-du-catalogue-"
+                ],
+                "cle": "TF-31",
+                "chemin": "TF-3.4.1",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Implémenter la restauration depuis iCloud",
+                "description": "Lire le fichier de backup et réinjecter les documents",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "sauvegarde-du-catalogue-"
+                ],
+                "cle": "TF-32",
+                "chemin": "TF-3.4.2",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Tester la procédure de sauvegarde et restauration",
+                "description": "Simuler une perte de données et vérifier la récupération",
+                "sources": [],
+                "type": "test",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le scénario de test de « Tester la procédure de sauvegarde et restauration » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "sauvegarde-du-catalogue-"
+                ],
+                "cle": "TF-33",
+                "chemin": "TF-3.4.3",
+                "complexite_classe": "Moyenne"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Prêt de livres, retards et notifications",
+        "description": "Gestion du cycle de prêt, calcul des retards et envoi de notifications.",
+        "stories": [
+          {
+            "cle": "TF-4.1",
+            "title": "Emprunter un livre",
+            "as_a": "élève",
+            "i_want": "réserver et emprunter un livre disponible",
+            "so_that": "je peux le lire pendant la période autorisée",
+            "acceptance": [
+              "Le livre doit être disponible (pas déjà emprunté)",
+              "Le prêt crée une entrée avec date de début et date de retour prévue"
+            ],
+            "tasks": [
+              {
+                "title": "Créer l'API de création de prêt",
+                "description": "Vérifier la disponibilité et enregistrer le prêt",
+                "sources": [
+                  11
+                ],
+                "type": "dev",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "emprunter-un-livre"
+                ],
+                "cle": "TF-34",
+                "chemin": "TF-4.1.1",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Mettre à jour le statut du livre (indisponible)",
+                "description": "Modifier la disponibilité du livre après emprunt",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "emprunter-un-livre"
+                ],
+                "cle": "TF-35",
+                "chemin": "TF-4.1.2",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Écrire les tests unitaires du flux d'emprunt",
+                "description": "Couverture >80 % des cas d'emprunt valide et refusé",
+                "sources": [],
+                "type": "test",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le scénario de test de « Écrire les tests unitaires du flux d'emprunt » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "emprunter-un-livre"
+                ],
+                "cle": "TF-36",
+                "chemin": "TF-4.1.3",
+                "complexite_classe": "Faible"
+              }
+            ]
+          },
+          {
+            "cle": "TF-4.2",
+            "title": "Retourner un livre",
+            "as_a": "élève",
+            "i_want": "rendre le livre emprunté",
+            "so_that": "il redevient disponible pour les autres usagers",
+            "acceptance": [
+              "Le retour met à jour la date de retour réelle",
+              "Le statut du livre redevient disponible"
+            ],
+            "tasks": [
+              {
+                "title": "Développer l'endpoint de retour de livre",
+                "description": "Enregistrer la date de retour et recalculer le retard éventuel",
+                "sources": [
+                  11
+                ],
+                "type": "dev",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "retourner-un-livre"
+                ],
+                "cle": "TF-37",
+                "chemin": "TF-4.2.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Recalculer les éventuelles amendes liées au retard",
+                "description": "Appeler le service de calcul d'amende si le retour est tardif",
+                "sources": [
+                  3
+                ],
+                "type": "dev",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "retourner-un-livre"
+                ],
+                "cle": "TF-38",
+                "chemin": "TF-4.2.2",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Tester les scénarios de retour à temps et en retard",
+                "description": "Vérifier la mise à jour du statut et la génération d'amende",
+                "sources": [],
+                "type": "test",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le scénario de test de « Tester les scénarios de retour à temps et en retard » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "retourner-un-livre"
+                ],
+                "cle": "TF-39",
+                "chemin": "TF-4.2.3",
+                "complexite_classe": "Moyenne"
+              }
+            ]
+          },
+          {
+            "cle": "TF-4.3",
+            "title": "Calcul automatique des retards",
+            "as_a": "bibliothécaire",
+            "i_want": "que le système calcule les retards dès le dépassement de la date prévue",
+            "so_that": "les amendes sont générées sans intervention manuelle",
+            "acceptance": [
+              "Le calcul s'exécute chaque nuit et identifie les prêts en retard",
+              "Une amende de 0,50 €/jour est attribuée à chaque jour de retard"
+            ],
+            "tasks": [
+              {
+                "title": "Implémenter le job de calcul des retards (cron)",
+                "description": "Parcourir les prêts non retournés et comparer aux dates prévues",
+                "sources": [
+                  3
+                ],
+                "type": "dev",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "calcul-automatique-des-r"
+                ],
+                "cle": "TF-40",
+                "chemin": "TF-4.3.1",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Générer les enregistrements d'amende correspondants",
+                "description": "Créer ou mettre à jour les amendes liées aux prêts en retard",
+                "sources": [
+                  2
+                ],
+                "type": "dev",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "calcul-automatique-des-r"
+                ],
+                "cle": "TF-41",
+                "chemin": "TF-4.3.2",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Écrire les tests d'intégration du calcul de retard",
+                "description": "Simuler des prêts avec dates dépassées et vérifier les amendes",
+                "sources": [],
+                "type": "test",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le scénario de test de « Écrire les tests d'intégration du calcul de retard » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "calcul-automatique-des-r"
+                ],
+                "cle": "TF-42",
+                "chemin": "TF-4.3.3",
+                "complexite_classe": "Moyenne"
+              }
+            ]
+          },
+          {
+            "cle": "TF-4.4",
+            "title": "Envoi de notifications de retard et pénalités",
+            "as_a": "bibliothécaire",
+            "i_want": "notifier les usagers en retard par email",
+            "so_that": "ils sont informés et incités à retourner le livre rapidement",
+            "acceptance": [
+              "Un email est envoyé 2 jours avant la date de retour prévue",
+              "Un email de rappel est envoyé chaque jour de retard jusqu'à la restitution"
+            ],
+            "tasks": [
+              {
+                "title": "Développer le service d'envoi d'emails",
+                "description": "Utiliser un provider SMTP ou SendGrid pour les notifications",
+                "sources": [
+                  4
+                ],
+                "type": "dev",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "envoi-de-notifications-d"
+                ],
+                "cle": "TF-43",
+                "chemin": "TF-4.4.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Planifier les envois de rappel via le job de retard",
+                "description": "Intégrer l'envoi d'email dans le même cron que le calcul des retards",
+                "sources": [
+                  4
+                ],
+                "type": "config",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "La configuration est reproductible sur un environnement neuf",
+                  "Elle est documentée et versionnée",
+                  "Un déploiement de bout en bout réussit"
+                ],
+                "labels": [
+                  "config",
+                  "envoi-de-notifications-d"
+                ],
+                "cle": "TF-44",
+                "chemin": "TF-4.4.2",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Tester les scénarios d'envoi (success / échec)",
+                "description": "Mock le service d'email et vérifier les logs",
+                "sources": [],
+                "type": "test",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le scénario de test de « Tester les scénarios d'envoi (success / échec) » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "envoi-de-notifications-d"
+                ],
+                "cle": "TF-45",
+                "chemin": "TF-4.4.3",
+                "complexite_classe": "Faible"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Gestion des amendes et paiements",
+        "description": "Création, suivi et règlement des amendes liées aux retards.",
+        "stories": [
+          {
+            "cle": "TF-5.1",
+            "title": "Génération d'amendes pour retards",
+            "as_a": "bibliothécaire",
+            "i_want": "automatiquement créer des amendes lorsqu'un livre est en retard",
+            "so_that": "les usagers sont facturés conformément à la politique",
+            "acceptance": [
+              "Une amende est créée dès le premier jour de retard",
+              "Le montant total s'accumule jour après jour tant que le livre n'est pas rendu"
+            ],
+            "tasks": [
+              {
+                "title": "Définir le modèle d'amende (montant, statut, lien prêt)",
+                "description": "Créer la collection MongoDB correspondante",
+                "sources": [
+                  2
+                ],
+                "type": "dev",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "generation-d'amendes-pou"
+                ],
+                "cle": "TF-46",
+                "chemin": "TF-5.1.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Intégrer la génération d'amende dans le job de retard",
+                "description": "Appeler la fonction de création d'amende pour chaque prêt en retard",
+                "sources": [
+                  3
+                ],
+                "type": "dev",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "generation-d'amendes-pou"
+                ],
+                "cle": "TF-47",
+                "chemin": "TF-5.1.2",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Documenter la politique de pénalité",
+                "description": "Spécifier le tarif journalier et les conditions d'exonération",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "generation-d'amendes-pou"
+                ],
+                "cle": "TF-48",
+                "chemin": "TF-5.1.3",
+                "complexite_classe": "Faible"
+              }
+            ]
+          },
+          {
+            "cle": "TF-5.2",
+            "title": "Paiement des amendes en ligne",
+            "as_a": "élève",
+            "i_want": "payer mes amendes via une interface sécurisée",
+            "so_that": "je règle mes dettes rapidement et je peux à nouveau emprunter",
+            "acceptance": [
+              "Le paiement accepte les cartes bancaires via un provider PCI‑DSS",
+              "Après paiement, l'amende passe au statut \"payée\""
+            ],
+            "tasks": [
+              {
+                "title": "Intégrer une passerelle de paiement (ex. Stripe)",
+                "description": "Créer le formulaire de paiement et le webhook de confirmation",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "paiement-des-amendes-en-"
+                ],
+                "cle": "TF-49",
+                "chemin": "TF-5.2.1",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Mettre à jour le statut de l'amende après confirmation",
+                "description": "Enregistrer la transaction et marquer l'amende comme réglée",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "paiement-des-amendes-en-"
+                ],
+                "cle": "TF-50",
+                "chemin": "TF-5.2.2",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Tester les flux de paiement (sandbox)",
+                "description": "Simuler des paiements réussis et échoués",
+                "sources": [],
+                "type": "test",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le scénario de test de « Tester les flux de paiement (sandbox) » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "paiement-des-amendes-en-"
+                ],
+                "cle": "TF-51",
+                "chemin": "TF-5.2.3",
+                "complexite_classe": "Moyenne"
+              }
+            ]
+          },
+          {
+            "cle": "TF-5.3",
+            "title": "Suivi des recettes et dépenses",
+            "as_a": "administrateur scolaire",
+            "i_want": "visualiser les statistiques de paiements d'amendes",
+            "so_that": "je peux analyser les revenus générés par la bibliothèque",
+            "acceptance": [
+              "Un tableau de bord affiche le total des amendes perçues par mois",
+              "Les données peuvent être exportées en CSV"
+            ],
+            "tasks": [
+              {
+                "title": "Créer l'API de reporting des paiements",
+                "description": "Agrégation des montants par période",
+                "sources": [
+                  6
+                ],
+                "type": "dev",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "suivi-des-recettes-et-de"
+                ],
+                "cle": "TF-52",
+                "chemin": "TF-5.3.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Développer le composant de tableau de bord",
+                "description": "Graphiques avec Chart.js ou équivalent",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "suivi-des-recettes-et-de"
+                ],
+                "cle": "TF-53",
+                "chemin": "TF-5.3.2",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Rédiger la documentation d'utilisation du tableau de bord",
+                "description": "Guide d'interprétation des indicateurs",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "suivi-des-recettes-et-de"
+                ],
+                "cle": "TF-54",
+                "chemin": "TF-5.3.3",
+                "complexite_classe": "Faible"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Reporting, export et sauvegarde",
+        "description": "Fonctionnalités de reporting, export CSV et sauvegarde des données.",
+        "stories": [
+          {
+            "cle": "TF-6.1",
+            "title": "Export des données au format CSV",
+            "as_a": "administrateur",
+            "i_want": "exporter les listes de prêts, membres et amendes en CSV",
+            "so_that": "je peux les analyser dans des outils externes",
+            "acceptance": [
+              "L'export inclut les colonnes requises et respecte l'encodage UTF‑8",
+              "Un bouton d'export est disponible dans chaque tableau de bord"
+            ],
+            "tasks": [
+              {
+                "title": "Implémenter les endpoints d'export CSV pour chaque entité",
+                "description": "Générer le flux CSV à la volée",
+                "sources": [
+                  6
+                ],
+                "type": "dev",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "export-des-donnees-au-fo"
+                ],
+                "cle": "TF-55",
+                "chemin": "TF-6.1.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Ajouter les tests de conformité du format CSV",
+                "description": "Vérifier l'ordre des colonnes et l'absence de caractères spéciaux",
+                "sources": [],
+                "type": "test",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le scénario de test de « Ajouter les tests de conformité du format CSV » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "export-des-donnees-au-fo"
+                ],
+                "cle": "TF-56",
+                "chemin": "TF-6.1.2",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Mettre à jour la documentation d'export",
+                "description": "Décrire les paramètres disponibles et les exemples de fichiers",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "export-des-donnees-au-fo"
+                ],
+                "cle": "TF-57",
+                "chemin": "TF-6.1.3",
+                "complexite_classe": "Moyenne"
+              }
+            ]
+          },
+          {
+            "cle": "TF-6.2",
+            "title": "Tableau de bord de suivi des prêts",
+            "as_a": "bibliothécaire",
+            "i_want": "voir en temps réel le nombre de prêts actifs, les retards et les amendes",
+            "so_that": "je peux piloter l'activité de la bibliothèque",
+            "acceptance": [
+              "Le tableau de bord affiche le nombre total de prêts, le nombre de retards et le montant des amendes",
+              "Les données se rafraîchissent automatiquement toutes les 5 minutes"
+            ],
+            "tasks": [
+              {
+                "title": "Développer le service d'agrégation des métriques de prêts",
+                "description": "Calculer les indicateurs à partir des collections MongoDB",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "tableau-de-bord-de-suivi"
+                ],
+                "cle": "TF-58",
+                "chemin": "TF-6.2.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Créer le composant UI du tableau de bord",
+                "description": "Utiliser React et websockets pour le rafraîchissement",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "tableau-de-bord-de-suivi"
+                ],
+                "cle": "TF-59",
+                "chemin": "TF-6.2.2",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Écrire les tests d'intégration du tableau de bord",
+                "description": "Vérifier la cohérence des chiffres affichés avec les données sources",
+                "sources": [],
+                "type": "test",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le scénario de test de « Écrire les tests d'intégration du tableau de bord » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "tableau-de-bord-de-suivi"
+                ],
+                "cle": "TF-60",
+                "chemin": "TF-6.2.3",
+                "complexite_classe": "Moyenne"
+              }
+            ]
+          },
+          {
+            "cle": "TF-6.3",
+            "title": "Sauvegarde régulière sur iCloud Drive",
+            "as_a": "administrateur",
+            "i_want": "planifier des sauvegardes automatiques de la base de données",
+            "so_that": "les données sont protégées contre les pertes accidentelles",
+            "acceptance": [
+              "Une sauvegarde complète est créée chaque nuit à 02 h00",
+              "Les sauvegardes sont conservées pendant 30 jours"
+            ],
+            "tasks": [
+              {
+                "title": "Configurer le job de dump quotidien vers iCloud",
+                "description": "Utiliser mongodump et le script de transfert",
+                "sources": [
+                  5
+                ],
+                "type": "config",
+                "priorite": "Haute",
+                "criteres": [
+                  "La configuration est reproductible sur un environnement neuf",
+                  "Elle est documentée et versionnée",
+                  "Un déploiement de bout en bout réussit"
+                ],
+                "labels": [
+                  "config",
+                  "sauvegarde-reguliere-sur"
+                ],
+                "cle": "TF-61",
+                "chemin": "TF-6.3.1",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Mettre en place la rotation des backups (30 jours)",
+                "description": "Supprimer les fichiers plus anciens via script",
+                "sources": [],
+                "type": "config",
+                "priorite": "Basse",
+                "criteres": [
+                  "La configuration est reproductible sur un environnement neuf",
+                  "Elle est documentée et versionnée",
+                  "Un déploiement de bout en bout réussit"
+                ],
+                "labels": [
+                  "config",
+                  "sauvegarde-reguliere-sur"
+                ],
+                "cle": "TF-62",
+                "chemin": "TF-6.3.2",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Tester la restauration à partir d'un backup iCloud",
+                "description": "Simuler une perte et vérifier la récupération complète",
+                "sources": [],
+                "type": "test",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le scénario de test de « Tester la restauration à partir d'un backup iCloud » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "sauvegarde-reguliere-sur"
+                ],
+                "cle": "TF-63",
+                "chemin": "TF-6.3.3",
+                "complexite_classe": "Moyenne"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Qualité, sécurité et mise en production",
+        "description": "Gestion des incidents, demandes de services, changements et sécurisation de l'application.",
+        "stories": [
+          {
+            "cle": "TF-7.1",
+            "title": "Gestion des incidents",
+            "as_a": "bibliothécaire",
+            "i_want": "enregistrer et suivre les incidents techniques",
+            "so_that": "les problèmes sont résolus rapidement",
+            "acceptance": [
+              "Un incident peut être créé avec priorité, description et affecté à un technicien",
+              "Le statut de l'incident évolue (ouvert, en cours, résolu)"
+            ],
+            "tasks": [
+              {
+                "title": "Développer le module de tickets d'incident",
+                "description": "CRUD des incidents avec champs priorité et statut",
+                "sources": [
+                  7
+                ],
+                "type": "dev",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "gestion-des-incidents"
+                ],
+                "cle": "TF-64",
+                "chemin": "TF-7.1.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Intégrer les notifications par email aux changements de statut",
+                "description": "Envoyer un mail au responsable à chaque mise à jour",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "gestion-des-incidents"
+                ],
+                "cle": "TF-65",
+                "chemin": "TF-7.1.2",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Rédiger le guide de gestion des incidents",
+                "description": "Procédures de création, suivi et clôture",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "gestion-des-incidents"
+                ],
+                "cle": "TF-66",
+                "chemin": "TF-7.1.3",
+                "complexite_classe": "Elevee"
+              }
+            ]
+          },
+          {
+            "cle": "TF-7.2",
+            "title": "Gestion des demandes de services",
+            "as_a": "enseignant",
+            "i_want": "soumettre une demande d'ajout de nouveau livre ou de fonctionnalité",
+            "so_that": "l'équipe peut planifier les évolutions",
+            "acceptance": [
+              "La demande contient titre, description et catégorie",
+              "Le statut passe de \"soumise\" à \"en cours\" puis \"terminée\""
+            ],
+            "tasks": [
+              {
+                "title": "Créer le formulaire de demande de service",
+                "description": "Interface web pour saisir et suivre les demandes",
+                "sources": [
+                  8
+                ],
+                "type": "dev",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "gestion-des-demandes-de-"
+                ],
+                "cle": "TF-67",
+                "chemin": "TF-7.2.1",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Mettre en place le workflow de traitement",
+                "description": "Définir les étapes et les notifications associées",
+                "sources": [],
+                "type": "design",
+                "priorite": "Basse",
+                "criteres": [
+                  "La maquette est validée par le demandeur",
+                  "Les états vide, erreur et chargement sont représentés"
+                ],
+                "labels": [
+                  "design",
+                  "gestion-des-demandes-de-"
+                ],
+                "cle": "TF-68",
+                "chemin": "TF-7.2.2",
+                "complexite_classe": "Elevee"
+              },
+              {
+                "title": "Documenter le processus de demande de service",
+                "description": "Guide pour les utilisateurs et les équipes techniques",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "gestion-des-demandes-de-"
+                ],
+                "cle": "TF-69",
+                "chemin": "TF-7.2.3",
+                "complexite_classe": "Faible"
+              }
+            ]
+          },
+          {
+            "cle": "TF-7.3",
+            "title": "Gestion des changements et mises en production",
+            "as_a": "administrateur",
+            "i_want": "planifier, valider et déployer les changements de version",
+            "so_that": "les mises à jour sont réalisées sans interruption de service",
+            "acceptance": [
+              "Chaque changement possède un ticket avec description, impact et date prévue",
+              "Le déploiement passe par l'environnement de pré‑production avant production"
+            ],
+            "tasks": [
+              {
+                "title": "Implémenter le processus de pull‑request avec revue obligatoire",
+                "description": "Configurer les règles de branche dans GitHub",
+                "sources": [
+                  9,
+                  10
+                ],
+                "type": "config",
+                "priorite": "Haute",
+                "criteres": [
+                  "La configuration est reproductible sur un environnement neuf",
+                  "Elle est documentée et versionnée",
+                  "Un déploiement de bout en bout réussit"
+                ],
+                "labels": [
+                  "config",
+                  "gestion-des-changements-"
+                ],
+                "cle": "TF-70",
+                "chemin": "TF-7.3.1",
+                "complexite_classe": "Moyenne"
+              },
+              {
+                "title": "Déployer automatiquement en pré‑production via CI/CD",
+                "description": "Utiliser le pipeline existant pour le staging",
+                "sources": [],
+                "type": "config",
+                "priorite": "Basse",
+                "criteres": [
+                  "La configuration est reproductible sur un environnement neuf",
+                  "Elle est documentée et versionnée",
+                  "Un déploiement de bout en bout réussit"
+                ],
+                "labels": [
+                  "config",
+                  "gestion-des-changements-"
+                ],
+                "cle": "TF-71",
+                "chemin": "TF-7.3.2",
+                "complexite_classe": "Tres_elevee"
+              },
+              {
+                "title": "Rédiger la procédure de mise en production",
+                "description": "Checklist des étapes, rollback et validation post‑déploiement",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "gestion-des-changements-"
+                ],
+                "cle": "TF-72",
+                "chemin": "TF-7.3.3",
+                "complexite_classe": "Moyenne"
+              }
+            ]
+          },
+          {
+            "cle": "TF-7.4",
+            "title": "Sécurisation de l'application",
+            "as_a": "développeur",
+            "i_want": "appliquer les exigences OWASP pour protéger l'application",
+            "so_that": "les risques de sécurité sont mitigés",
+            "acceptance": [
+              "Tous les points OWASP listés sont couverts par des contrôles techniques",
+              "Les tests de sécurité automatisés passent sans faille critique"
+            ],
+            "tasks": [
+              {
+                "title": "Implémenter la protection contre les injections (OWASP A03)",
+                "description": "Utiliser des requêtes paramétrées et valider les entrées",
+                "sources": [
+                  13,
+                  17
+                ],
+                "type": "securite",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le contrôle est effectif sur tous les points d'entrée",
+                  "Un test dédié prouve que l'accès non autorisé échoue",
+                  "Le comportement est journalisé"
+                ],
+                "labels": [
+                  "securite",
+                  "securisation-de-l'applic"
+                ],
+                "cle": "TF-73",
+                "chemin": "TF-7.4.1",
+                "complexite_classe": "Elevee"
+              },
+              {
+                "title": "Appliquer le principe du moindre privilège (OWASP A01)",
+                "description": "Réduire les droits des comptes de service et des utilisateurs",
+                "sources": [
+                  14,
+                  15
+                ],
+                "type": "securite",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le contrôle est effectif sur tous les points d'entrée",
+                  "Un test dédié prouve que l'accès non autorisé échoue",
+                  "Le comportement est journalisé"
+                ],
+                "labels": [
+                  "securite",
+                  "securisation-de-l'applic"
+                ],
+                "cle": "TF-74",
+                "chemin": "TF-7.4.2",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Renforcer le chiffrement des données en transit et au repos (OWASP A02)",
+                "description": "Forcer HTTPS, activer TLS 1.3 et chiffrer les sauvegardes",
+                "sources": [
+                  16,
+                  26
+                ],
+                "type": "securite",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le contrôle est effectif sur tous les points d'entrée",
+                  "Un test dédié prouve que l'accès non autorisé échoue",
+                  "Le comportement est journalisé"
+                ],
+                "labels": [
+                  "securite",
+                  "securisation-de-l'applic"
+                ],
+                "cle": "TF-75",
+                "chemin": "TF-7.4.3",
+                "complexite_classe": "Elevee"
+              },
+              {
+                "title": "Corriger les mauvaises configurations (OWASP A05)",
+                "description": "Désactiver les headers inutiles, sécuriser les cookies, limiter le CORS",
+                "sources": [
+                  19,
+                  20
+                ],
+                "type": "securite",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le contrôle est effectif sur tous les points d'entrée",
+                  "Un test dédié prouve que l'accès non autorisé échoue",
+                  "Le comportement est journalisé"
+                ],
+                "labels": [
+                  "securite",
+                  "securisation-de-l'applic"
+                ],
+                "cle": "TF-76",
+                "chemin": "TF-7.4.4",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Mettre à jour les dépendances vulnérables (OWASP A06)",
+                "description": "Utiliser npm audit, mettre à jour les packages et surveiller les alertes",
+                "sources": [
+                  21
+                ],
+                "type": "securite",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le contrôle est effectif sur tous les points d'entrée",
+                  "Un test dédié prouve que l'accès non autorisé échoue",
+                  "Le comportement est journalisé"
+                ],
+                "labels": [
+                  "securite",
+                  "securisation-de-l'applic"
+                ],
+                "cle": "TF-77",
+                "chemin": "TF-7.4.5",
+                "complexite_classe": "Faible"
+              },
+              {
+                "title": "Effectuer une revue de conception sécurisée (OWASP A04)",
+                "description": "Analyser les flux de données et appliquer les recommandations de conception",
+                "sources": [
+                  18
+                ],
+                "type": "securite",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le contrôle est effectif sur tous les points d'entrée",
+                  "Un test dédié prouve que l'accès non autorisé échoue",
+                  "Le comportement est journalisé"
+                ],
+                "labels": [
+                  "securite",
+                  "securisation-de-l'applic"
+                ],
+                "cle": "TF-78",
+                "chemin": "TF-7.4.6",
+                "complexite_classe": "Moyenne"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "metadonnees": {
+    "brief": "Application de gestion de bibliothèque scolaire avec prêt de livres, retards et catalogue partagé.",
+    "date": "2026-11-24 20:53",
+    "complexite": {
+      "origine": "modele",
+      "taches": 78,
+      "latence_ms": 15888
+    },
+    "modele": "openai/gpt-oss-120b",
+    "langue": "fr",
+    "analyse": {
+      "objectif": "Gérer les prêts, retards et catalogue partagé d'une bibliothèque scolaire",
+      "intention": "gestion de prêts, retards, catalogue",
+      "concepts": [
+        "gestion des prêts",
+        "suivi des retards",
+        "catalogue partagé",
+        "notifications",
+        "recherche de livres",
+        "gestion des membres",
+        "rapports"
+      ],
+      "domaine": "Éducation, Bibliothèque, Gestion",
+      "sujet": "Bibliothèque scolaire",
+      "utilisateurs": [
+        "Élèves",
+        "enseignants",
+        "bibliothécaires",
+        "administrateurs scolaires"
+      ],
+      "contraintes": [],
+      "fonctionnalites": [
+        "prêt de livres",
+        "gestion des retards",
+        "catalogue partagé"
+      ],
+      "requete_fr": "prêt de livres et retards",
+      "requete_en": "book lending and overdue",
+      "mots_cles": [
+        "prêt",
+        "retard",
+        "catalogue",
+        "bibliothèque",
+        "membre",
+        "livre",
+        "scolarité"
+      ]
+    },
+    "requete_fr": "prêt de livres et retards",
+    "requete_en": "book lending and overdue",
+    "sources_collectees": {
+      "owasp": {
+        "n": 10,
+        "gardes": 10
+      },
+      "github": {
+        "n": 3,
+        "gardes": 0
+      },
+      "srs": {
+        "n": 1,
+        "gardes": 1
+      },
+      "gitlab": {
+        "n": 3,
+        "gardes": 0
+      },
+      "itunes": {
+        "n": 2,
+        "gardes": 2
+      },
+      "apache": {
+        "n": 1,
+        "gardes": 1
+      },
+      "ted": {
+        "n": 1,
+        "gardes": 1
+      },
+      "swh": {
+        "n": 0,
+        "erreur": "'ascii' codec can't encode character '\\xea' in position 27: ",
+        "gardes": 0
+      },
+      "wikipedia": {
+        "n": 2,
+        "gardes": 0
+      }
+    },
+    "verdicts_projets": [
+      {
+        "titre": "A01:2021 – Contrôles d'accès défaillants",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A02:2021 – Défaillances cryptographiques",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A03:2021 – Injection",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A04:2021 – Conception non sécurisée",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A05:2021 – Mauvaise configuration de sécurité",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A06:2021 – Composants vulnérables et obsolètes",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A07:2021 – Identification et authentification de mauvaise qualité",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A08:2021 – Manque d'intégrité des données et du logiciel",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A09:2021 – Carence des systèmes de contrôle et de journalisation",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A10:2021 – A10 Falsification de requête côté serveur (SSRF)",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "Structure de référence d'un cahier des charges (IEEE SRS)",
+        "source": "srs",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "France – Prestations de services pour la collectivité – Prestations d'assistance informatique aux utilisateurs",
+        "source": "ted",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "Livre d'amende",
+        "source": "itunes",
+        "score": 0.65,
+        "retenu": true,
+        "motif": ""
+      },
+      {
+        "titre": "Rappel Bibliothèque2026",
+        "source": "itunes",
+        "score": 0.541,
+        "retenu": true,
+        "motif": ""
+      },
+      {
+        "titre": "Ayaan20k/Book-Lending-Platform",
+        "source": "github_readme",
+        "score": 0.456,
+        "retenu": true,
+        "motif": ""
+      },
+      {
+        "titre": "nivetha-kgn-2005/Book-Lending-System",
+        "source": "github_readme",
+        "score": 0.456,
+        "retenu": true,
+        "motif": ""
+      },
+      {
+        "titre": "Bibliothèque scolaire",
+        "source": "wikipedia_fr",
+        "score": 0.445,
+        "retenu": true,
+        "motif": ""
+      },
+      {
+        "titre": "ramaalshaban/librarymanagementsystem-lending-service",
+        "source": "github_readme",
+        "score": 0.424,
+        "retenu": true,
+        "motif": ""
+      },
+      {
+        "titre": "Prix Espiègle",
+        "source": "wikipedia_fr",
+        "score": 0.37,
+        "retenu": true,
+        "motif": ""
+      },
+      {
+        "titre": "biancagomes/api_nodejs",
+        "source": "gitlab_readme",
+        "score": 0.153,
+        "retenu": true,
+        "motif": "meilleur de sa source"
+      },
+      {
+        "titre": "haikelz/peminjaman-buku",
+        "source": "gitlab_readme",
+        "score": 0.148,
+        "retenu": 0.0,
+        "motif": "sujet trop peu présent"
+      },
+      {
+        "titre": "manar_aljarkas/library-management-project",
+        "source": "gitlab_readme",
+        "score": 0.0,
+        "retenu": 0.0,
+        "motif": "aucun mot du sujet"
+      },
+      {
+        "titre": "Apache bookkeeper",
+        "source": "apache",
+        "score": 0.0,
+        "retenu": 0.0,
+        "motif": "aucun mot du sujet"
+      }
+    ],
+    "categories_fonctionnalites": {
+      "général": 8,
+      "facturation": 1,
+      "communication": 1,
+      "données": 2,
+      "recherche": 1
+    },
+    "pipeline": {
+      "documents": 20,
+      "passages": 66,
+      "passages_retenus": 12,
+      "fonctionnalites": 13,
+      "fonctions_brutes": 15,
+      "fonctions_doublons": 0,
+      "fonctions_hors_sujet": 2,
+      "exigences": 8,
+      "extraits": 7,
+      "documents_dans_top": 12,
+      "bm25_top": "Livre d'amende",
+      "vector_top": "France – Prestations de services pour la collectivité – Prestations d'assistance informatique aux utilisateurs"
+    },
+    "qualite": {
+      "epics": 7,
+      "stories": 25,
+      "taches": 78,
+      "sourcees": 32,
+      "taux_ancrage": 0.41,
+      "doublons": 0,
+      "diversite": 21,
+      "couverture": 1.0,
+      "types": {
+        "config": 9,
+        "design": 2,
+        "dev": 35,
+        "doc": 12,
+        "securite": 9,
+        "test": 11
+      },
+      "taches_par_story": 3.12
+    },
+    "duree_s": 20.1,
+    "avertissements": [],
+    "motif_rejet": "",
+    "non_ancre": false
+  },
+  "preuves": [
+    {
+      "id": 1,
+      "type": "fonctionnalite",
+      "texte": "La gestion des membres, y compris des photos de votre galerie photo iPhone",
+      "document": "Livre d'amende",
+      "source": "itunes",
+      "url": "https://apps.apple.com/fr/app/livre-damende/id426276134?uo=4"
+    },
+    {
+      "id": 2,
+      "type": "fonctionnalite",
+      "texte": "Gestion des amendes, les paiements, les recettes et les dépenses par an",
+      "document": "Livre d'amende",
+      "source": "itunes",
+      "url": "https://apps.apple.com/fr/app/livre-damende/id426276134?uo=4"
+    },
+    {
+      "id": 3,
+      "type": "fonctionnalite",
+      "texte": "Calcul automatique des retards",
+      "document": "Livre d'amende",
+      "source": "itunes",
+      "url": "https://apps.apple.com/fr/app/livre-damende/id426276134?uo=4"
+    },
+    {
+      "id": 4,
+      "type": "fonctionnalite",
+      "texte": "Envoi des pénalités ou des notifications de paiement par e",
+      "document": "Livre d'amende",
+      "source": "itunes",
+      "url": "https://apps.apple.com/fr/app/livre-damende/id426276134?uo=4"
+    },
+    {
+      "id": 5,
+      "type": "fonctionnalite",
+      "texte": "Sauvegarde sur iCloud Drive",
+      "document": "Livre d'amende",
+      "source": "itunes",
+      "url": "https://apps.apple.com/fr/app/livre-damende/id426276134?uo=4"
+    },
+    {
+      "id": 6,
+      "type": "fonctionnalite",
+      "texte": "Export au format CSV",
+      "document": "Livre d'amende",
+      "source": "itunes",
+      "url": "https://apps.apple.com/fr/app/livre-damende/id426276134?uo=4"
+    },
+    {
+      "id": 7,
+      "type": "fonctionnalite",
+      "texte": "Gestion des incidents",
+      "document": "France – Prestations de services pour la collectivité – Prestations d'assistance informatique aux utilisateurs",
+      "source": "ted",
+      "url": "https://ted.europa.eu"
+    },
+    {
+      "id": 8,
+      "type": "fonctionnalite",
+      "texte": "Gestion des demandes de services",
+      "document": "France – Prestations de services pour la collectivité – Prestations d'assistance informatique aux utilisateurs",
+      "source": "ted",
+      "url": "https://ted.europa.eu"
+    },
+    {
+      "id": 9,
+      "type": "fonctionnalite",
+      "texte": "Gestion des mises en production",
+      "document": "France – Prestations de services pour la collectivité – Prestations d'assistance informatique aux utilisateurs",
+      "source": "ted",
+      "url": "https://ted.europa.eu"
+    },
+    {
+      "id": 10,
+      "type": "fonctionnalite",
+      "texte": "Gestion des changements",
+      "document": "France – Prestations de services pour la collectivité – Prestations d'assistance informatique aux utilisateurs",
+      "source": "ted",
+      "url": "https://ted.europa.eu"
+    },
+    {
+      "id": 11,
+      "type": "fonctionnalite",
+      "texte": "Gestion des prêts de matériel",
+      "document": "France – Prestations de services pour la collectivité – Prestations d'assistance informatique aux utilisateurs",
+      "source": "ted",
+      "url": "https://ted.europa.eu"
+    },
+    {
+      "id": 12,
+      "type": "fonctionnalite",
+      "texte": "Gestion des connaissances",
+      "document": "France – Prestations de services pour la collectivité – Prestations d'assistance informatique aux utilisateurs",
+      "source": "ted",
+      "url": "https://ted.europa.eu"
+    },
+    {
+      "id": 13,
+      "type": "fonctionnalite",
+      "texte": "des données hostiles sont utilisées au sein de paramètres de recherche de mapping objet",
+      "document": "A03:2021 – Injection",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A03_2021/"
+    },
+    {
+      "id": 14,
+      "type": "exigence",
+      "texte": "Contrôles d'accès défaillants",
+      "document": "A01:2021 – Contrôles d'accès défaillants",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A01_2021/"
+    },
+    {
+      "id": 15,
+      "type": "exigence",
+      "texte": "Violation du principe du moindre privilège ou de refus par défaut, où l'accès ne doit être accordé que pour des capacités, des rôles ou des utilisateurs particu",
+      "document": "A01:2021 – Contrôles d'accès défaillants",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A01_2021/"
+    },
+    {
+      "id": 16,
+      "type": "exigence",
+      "texte": "Défaillances cryptographiques",
+      "document": "A02:2021 – Défaillances cryptographiques",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A02_2021/"
+    },
+    {
+      "id": 17,
+      "type": "exigence",
+      "texte": "des données hostiles sont utilisées directement ou concaténées, par exemple lors de la construction de requêtes dynamiques, de commandes ou de procédures stocké",
+      "document": "A03:2021 – Injection",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A03_2021/"
+    },
+    {
+      "id": 18,
+      "type": "exigence",
+      "texte": "Conception non sécurisée",
+      "document": "A04:2021 – Conception non sécurisée",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A04_2021/"
+    },
+    {
+      "id": 19,
+      "type": "exigence",
+      "texte": "Mauvaise configuration de sécurité",
+      "document": "A05:2021 – Mauvaise configuration de sécurité",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A05_2021/"
+    },
+    {
+      "id": 20,
+      "type": "exigence",
+      "texte": "le traitement des erreurs révèle aux utilisateurs des traces des piles protocolaires ou d'autres messages d'erreur laissant transpirer trop d'informations",
+      "document": "A05:2021 – Mauvaise configuration de sécurité",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A05_2021/"
+    },
+    {
+      "id": 21,
+      "type": "exigence",
+      "texte": "Composants vulnérables et obsolètes",
+      "document": "A06:2021 – Composants vulnérables et obsolètes",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A06_2021/"
+    },
+    {
+      "id": 22,
+      "type": "extrait",
+      "texte": "Livre d'amende est la parfaite application pour la gestion des sanctions de votre club. Configurer votre catalogue d'amende individu, entrez membres du club y compris des photos, gérer les rendez-vous, des amendes, paiements, ... Faits saillants : - La gestion des membres, y comp",
+      "document": "Livre d'amende",
+      "source": "itunes",
+      "url": "https://apps.apple.com/fr/app/livre-damende/id426276134?uo=4"
+    },
+    {
+      "id": 23,
+      "type": "extrait",
+      "texte": "Book-Lending-Platform A web-based Book Lending System built with PHP, MySQL, HTML, CSS for managing a library of books and lending transactions. It supports user registration, login, book browsing, borrowing, returning, and overdue tracking with separate dashboards for users and ",
+      "document": "Ayaan20k/Book-Lending-Platform",
+      "source": "github_readme",
+      "url": "https://github.com/Ayaan20k/Book-Lending-Platform"
+    },
+    {
+      "id": 24,
+      "type": "extrait",
+      "texte": "La bibliothèque scolaire désigne toute bibliothèque que l'on peut trouver dans un établissement d'enseignement pour les jeunes. Le terme de bibliothèque scolaire est utilisé directement au Québec, en France sa forme la plus commune est le centre de documentation et d'information ",
+      "document": "Bibliothèque scolaire",
+      "source": "wikipedia_fr",
+      "url": "https://fr.wikipedia.org/wiki/Bibliothèque_scolaire"
+    },
+    {
+      "id": 25,
+      "type": "extrait",
+      "texte": "API nodejs Welcome to my first REST API !! Here you will find a simple CRUD for lending books to people. This project is a REST API using nodeJS and mongoDB. Required: [NodeJs] - [Express] - [MongoDB] How to use this API: 1º - Clone the project 2º - Install dependencies: npm inst",
+      "document": "biancagomes/api_nodejs",
+      "source": "gitlab_readme",
+      "url": "https://gitlab.com/biancagomes/api_nodejs"
+    },
+    {
+      "id": 26,
+      "type": "extrait",
+      "texte": "soit par défaut, soit dans le code source existant ? - Est-ce que des clefs de chiffrement par défaut sont utilisées ? Des clefs de chiffrement faibles sont-elles générées ou réutilisées ? Leur gestion et rotation sont-elles prises en charge ? Est-ce que des clés sont présentes d",
+      "document": "A02:2021 – Défaillances cryptographiques",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A02_2021/"
+    },
+    {
+      "id": 27,
+      "type": "extrait",
+      "texte": "ans les domaines suivants : - Gestion des incidents - Gestion des demandes de services - Gestion des mises en production - Gestion des changements - Gestion des prêts de matériel - Gestion des connaissances - Gestion de la qualité des données et des tableaux de bord\"]",
+      "document": "France – Prestations de services pour la collectivité – Prestations d'assistance informatique aux utilisateurs",
+      "source": "ted",
+      "url": "https://ted.europa.eu"
+    },
+    {
+      "id": 28,
+      "type": "extrait",
+      "texte": "Sections attendues : Software Requirements Specification | For {{project name}} | Table of Contents | Revision History | 1. Introduction | 1.1 Document Purpose | 1.2 Product Scope | 1.3 Definitions, Acronyms, and Abbreviations | 1.4 References | 1.5 Document Overview | 2. Product",
+      "document": "Structure de référence d'un cahier des charges (IEEE SRS)",
+      "source": "srs",
+      "url": "https://raw.githubusercontent.com/jam01/SRS-Template/master/srs-template-bare.md"
+    }
+  ],
+  "passages": [
+    {
+      "document": "Livre d'amende",
+      "source": "itunes",
+      "scores": {
+        "hybride": 0.0325,
+        "couverture": 0.273,
+        "source": 0.95,
+        "penalite_repetition": 0.0,
+        "final": 0.4042
+      },
+      "texte": "Livre d'amende est la parfaite application pour la gestion des sanctions de votre club. Configurer votre catalogue d'amende individu, entrez membres du club y compris des photos, gérer les rendez-vous, des amendes, paiements, ... Faits saillants : - La gestion des membres, y compris des photos de votre galerie photo iPhone - Gestion des amendes, les paiements, les recettes et les dépenses par an -"
+    },
+    {
+      "document": "Ayaan20k/Book-Lending-Platform",
+      "source": "github_readme",
+      "scores": {
+        "hybride": 0.0286,
+        "couverture": 0.136,
+        "source": 1.0,
+        "penalite_repetition": 0.0,
+        "final": 0.362
+      },
+      "texte": "# Book-Lending-Platform A web-based Book Lending System built with PHP, MySQL, HTML, CSS for managing a library of books and lending transactions. It supports user registration, login, book browsing, borrowing, returning, and overdue tracking with separate dashboards for users and admin."
+    },
+    {
+      "document": "Bibliothèque scolaire",
+      "source": "wikipedia_fr",
+      "scores": {
+        "hybride": 0.0313,
+        "couverture": 0.091,
+        "source": 0.8,
+        "penalite_repetition": 0.0,
+        "final": 0.3174
+      },
+      "texte": "La bibliothèque scolaire désigne toute bibliothèque que l'on peut trouver dans un établissement d'enseignement pour les jeunes. Le terme de bibliothèque scolaire est utilisé directement au Québec, en France sa forme la plus commune est le centre de documentation et d'information (CDI), dans les établissements d'enseignement secondaire."
+    },
+    {
+      "document": "Rappel Bibliothèque2026",
+      "source": "itunes",
+      "scores": {
+        "hybride": 0.0315,
+        "couverture": 0.227,
+        "source": 0.95,
+        "penalite_repetition": 0.08,
+        "final": 0.3078
+      },
+      "texte": "Rappel Retour Livres est un outil local pour gérer les emprunts de bibliothèque. Vous pouvez enregistrer pour chaque livre le titre, l’auteur, la bibliothèque, l’emplacement, la date d’emprunt, la date de retour prévue, le nombre de renouvellements, les dépôts et les notes sur d’éventuels frais de retard, puis consulter le tableau des échéances pour voir les livres à traiter. L’app classe les empr"
+    },
+    {
+      "document": "nivetha-kgn-2005/Book-Lending-System",
+      "source": "github_readme",
+      "scores": {
+        "hybride": 0.0278,
+        "couverture": 0.136,
+        "source": 1.0,
+        "penalite_repetition": 0.08,
+        "final": 0.2816
+      },
+      "texte": "# Book-Lending-System A database-driven application that allows users to borrow and return books, manage overdue fines, and track transactions. Includes an admin panel for book management and report generation using MySQL and PHP."
+    },
+    {
+      "document": "ramaalshaban/librarymanagementsystem-lending-service",
+      "source": "github_readme",
+      "scores": {
+        "hybride": 0.027,
+        "couverture": 0.136,
+        "source": 1.0,
+        "penalite_repetition": 0.16,
+        "final": 0.2012
+      },
+      "texte": "# librarymanagementsystem-lending-service Handles book lending lifecycle: checkouts, returns, renewals, member and librarian transactions, reservations (holds), overdue detection/events; tracks per-user and per-branch activity; provides real-time lending state for library network. ## Team This microservice is designed by . | Role | Name | Mail Address | | ---------------- - | --- - | ----------- -"
+    },
+    {
+      "document": "biancagomes/api_nodejs",
+      "source": "gitlab_readme",
+      "scores": {
+        "hybride": 0.0253,
+        "couverture": 0.045,
+        "source": 1.0,
+        "penalite_repetition": 0.0,
+        "final": 0.1786
+      },
+      "texte": "API nodejs Welcome to my first REST API !! Here you will find a simple CRUD for lending books to people. This project is a REST API using nodeJS and mongoDB. Required: [NodeJs] - [Express] - [MongoDB] How to use this API: 1º - Clone the project 2º - Install dependencies: npm install 3º - Connect to your mongoDb account: use file .env.example 4º - Run project: npm start Your contribution will be we"
+    },
+    {
+      "document": "A02:2021 – Défaillances cryptographiques",
+      "source": "owasp",
+      "scores": {
+        "hybride": 0.0272,
+        "couverture": 0.045,
+        "source": 0.85,
+        "penalite_repetition": 0.0,
+        "final": 0.157
+      },
+      "texte": ", soit par défaut, soit dans le code source existant ? - Est-ce que des clefs de chiffrement par défaut sont utilisées ? Des clefs de chiffrement faibles sont-elles générées ou réutilisées ? Leur gestion et rotation sont-elles prises en charge ? Est-ce que des clés sont présentes dans l'outil de versionnement de code source ? - Les réponses transmises au navigateur"
+    },
+    {
+      "document": "France – Prestations de services pour la collectivité – Prestations d'assistance informatique aux utilisateurs",
+      "source": "ted",
+      "scores": {
+        "hybride": 0.0325,
+        "couverture": 0.091,
+        "source": 0.7,
+        "penalite_repetition": 0.0,
+        "final": 0.1531
+      },
+      "texte": "ans les domaines suivants : - Gestion des incidents - Gestion des demandes de services - Gestion des mises en production - Gestion des changements - Gestion des prêts de matériel - Gestion des connaissances - Gestion de la qualité des données et des tableaux de bord\"]"
+    },
+    {
+      "document": "Structure de référence d'un cahier des charges (IEEE SRS)",
+      "source": "srs",
+      "scores": {
+        "hybride": 0.0159,
+        "couverture": 0.0,
+        "source": 0.9,
+        "penalite_repetition": 0.0,
+        "final": 0.1429
+      },
+      "texte": "Sections attendues : Software Requirements Specification | For {{project name}} | Table of Contents | Revision History | 1. Introduction | 1.1 Document Purpose | 1.2 Product Scope | 1.3 Definitions, Acronyms, and Abbreviations | 1.4 References | 1.5 Document Overview | 2. Product Overview | 2.1 Product Perspective | 2.2 Product Functions | 2.3 Product Constraints | 2.4 User Characteristics | 2.5 A"
+    },
+    {
+      "document": "A06:2021 – Composants vulnérables et obsolètes",
+      "source": "owasp",
+      "scores": {
+        "hybride": 0.0268,
+        "couverture": 0.045,
+        "source": 0.85,
+        "penalite_repetition": 0.08,
+        "final": 0.0768
+      },
+      "texte": "rable : - si vous ne savez pas quels sont tous les composants que vous utilisez (à la fois côté client et côté serveur). Cela comprend les composants que vous utilisez directement ou par l'intermédiaire des dépendances imbriquées ; - si le logiciel est vulnérable, sans support ou obsolète. Cela concerne le système d'exploitation, le serveur web/application, le système de gestion de base de données"
+    },
+    {
+      "document": "Prix Espiègle",
+      "source": "wikipedia_fr",
+      "scores": {
+        "hybride": 0.0294,
+        "couverture": 0.045,
+        "source": 0.8,
+        "penalite_repetition": 0.08,
+        "final": 0.0706
+      },
+      "texte": "Le prix Espiègle est un prix littéraire québécois annuel pour la jeunesse. Il est créé en 2017 par l'Association pour la promotion des services documentaires scolaires (APSDS) et couronne des livres audacieux et d’une grande qualité littéraire. Il récompense des livres dont le sujet dérange ou déclenche une polémique, il peut aussi s'agir de livres censurés à cause de la nature de leur sujet."
+    }
+  ]
+}

@@ -1,0 +1,1395 @@
+{
+  "plan": {
+    "epics": [
+      {
+        "title": "Socle technique",
+        "description": "Mise en place de l'infrastructure, du modèle de données et de l'environnement de déploiement",
+        "stories": [
+          {
+            "cle": "TF-1.1",
+            "title": "Configuration de l'environnement de déploiement",
+            "as_a": "administrateur DevOps",
+            "i_want": "déployer l'application dans des conteneurs",
+            "so_that": "le déploiement soit reproductible et isolé",
+            "acceptance": [
+              "Un Dockerfile valide construit l'image de l'application",
+              "docker‑compose lance l'application et la base de données",
+              "Les variables sensibles sont gérées via des secrets"
+            ],
+            "tasks": [
+              {
+                "title": "Rédiger le Dockerfile pour l'application",
+                "description": "Créer le Dockerfile avec les étapes de build et runtime",
+                "sources": [],
+                "type": "config",
+                "priorite": "Basse",
+                "criteres": [
+                  "La configuration est reproductible sur un environnement neuf",
+                  "Elle est documentée et versionnée",
+                  "Un déploiement de bout en bout réussit"
+                ],
+                "labels": [
+                  "config",
+                  "configuration-de-l'envir"
+                ],
+                "cle": "TF-1",
+                "chemin": "TF-1.1.1"
+              },
+              {
+                "title": "Créer le docker‑compose.yml avec la base de données",
+                "description": "Définir les services app et db, réseaux et volumes",
+                "sources": [],
+                "type": "config",
+                "priorite": "Basse",
+                "criteres": [
+                  "La configuration est reproductible sur un environnement neuf",
+                  "Elle est documentée et versionnée",
+                  "Un déploiement de bout en bout réussit"
+                ],
+                "labels": [
+                  "config",
+                  "configuration-de-l'envir"
+                ],
+                "cle": "TF-2",
+                "chemin": "TF-1.1.2"
+              },
+              {
+                "title": "Configurer les variables d'environnement et secrets",
+                "description": "Utiliser .env et Docker secrets pour les mots de passe",
+                "sources": [
+                  13,
+                  16
+                ],
+                "type": "config",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "La configuration est reproductible sur un environnement neuf",
+                  "Elle est documentée et versionnée",
+                  "Un déploiement de bout en bout réussit"
+                ],
+                "labels": [
+                  "config",
+                  "configuration-de-l'envir"
+                ],
+                "cle": "TF-3",
+                "chemin": "TF-1.1.3"
+              },
+              {
+                "title": "Mettre en place le script de déploiement sur serveur",
+                "description": "Écrire un script bash ou Ansible pour déployer l'image",
+                "sources": [],
+                "type": "config",
+                "priorite": "Basse",
+                "criteres": [
+                  "La configuration est reproductible sur un environnement neuf",
+                  "Elle est documentée et versionnée",
+                  "Un déploiement de bout en bout réussit"
+                ],
+                "labels": [
+                  "config",
+                  "configuration-de-l'envir"
+                ],
+                "cle": "TF-4",
+                "chemin": "TF-1.1.4"
+              },
+              {
+                "title": "Documenter la procédure de déploiement",
+                "description": "Rédiger les étapes d'installation et de mise à jour",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "configuration-de-l'envir"
+                ],
+                "cle": "TF-5",
+                "chemin": "TF-1.1.5"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Gestion des utilisateurs et des accès",
+        "description": "Gestion des profils, authentification, autorisations et sécurité des accès",
+        "stories": [
+          {
+            "cle": "TF-2.1",
+            "title": "Gestion des droits d'accès (contrôles d'accès)",
+            "as_a": "développeur sécurité",
+            "i_want": "appliquer le principe du moindre privilège sur les API",
+            "so_that": "les utilisateurs ne puissent pas accéder à des fonctions non autorisées",
+            "acceptance": [
+              "Toutes les routes sont protégées par des politiques d'autorisation",
+              "Les tentatives d'accès non autorisées sont logguées",
+              "Le principe du refus par défaut est respecté"
+            ],
+            "tasks": [
+              {
+                "title": "Auditer les points d'accès API et appliquer le principe du moindre privilège",
+                "description": "Analyser chaque endpoint et restreindre les rôles nécessaires",
+                "sources": [
+                  11,
+                  12
+                ],
+                "type": "securite",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le contrôle est effectif sur tous les points d'entrée",
+                  "Un test dédié prouve que l'accès non autorisé échoue",
+                  "Le comportement est journalisé"
+                ],
+                "labels": [
+                  "securite",
+                  "gestion-des-droits-d'acc"
+                ],
+                "cle": "TF-6",
+                "chemin": "TF-2.1.1"
+              },
+              {
+                "title": "Implémenter le contrôle d'accès basé sur les rôles dans chaque endpoint",
+                "description": "Utiliser les attributs d'autorisation et vérifier le token",
+                "sources": [
+                  11
+                ],
+                "type": "securite",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le contrôle est effectif sur tous les points d'entrée",
+                  "Un test dédié prouve que l'accès non autorisé échoue",
+                  "Le comportement est journalisé"
+                ],
+                "labels": [
+                  "securite",
+                  "gestion-des-droits-d'acc"
+                ],
+                "cle": "TF-7",
+                "chemin": "TF-2.1.2"
+              },
+              {
+                "title": "Configurer le logging des tentatives d'accès",
+                "description": "Enregistrer les échecs d'autorisation avec IP et timestamp",
+                "sources": [
+                  17
+                ],
+                "type": "securite",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le contrôle est effectif sur tous les points d'entrée",
+                  "Un test dédié prouve que l'accès non autorisé échoue",
+                  "Le comportement est journalisé"
+                ],
+                "labels": [
+                  "securite",
+                  "gestion-des-droits-d'acc"
+                ],
+                "cle": "TF-8",
+                "chemin": "TF-2.1.3"
+              },
+              {
+                "title": "Réaliser des tests d'intrusion basiques",
+                "description": "Effectuer des requêtes non autorisées et vérifier les réponses",
+                "sources": [
+                  14
+                ],
+                "type": "securite",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le contrôle est effectif sur tous les points d'entrée",
+                  "Un test dédié prouve que l'accès non autorisé échoue",
+                  "Le comportement est journalisé"
+                ],
+                "labels": [
+                  "securite",
+                  "gestion-des-droits-d'acc"
+                ],
+                "cle": "TF-9",
+                "chemin": "TF-2.1.4"
+              },
+              {
+                "title": "Mettre à jour la documentation de sécurité",
+                "description": "Décrire les mécanismes d'authentification et d'autorisation",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "gestion-des-droits-d'acc"
+                ],
+                "cle": "TF-10",
+                "chemin": "TF-2.1.5"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Gestion du catalogue et des ouvrages",
+        "description": "Enregistrement, recherche, assignation et navigation du catalogue de livres",
+        "stories": [
+          {
+            "cle": "TF-3.1",
+            "title": "Navigation du catalogue (browsing)",
+            "as_a": "enseignant",
+            "i_want": "parcourir le catalogue par catégorie et pagination",
+            "so_that": "je trouve rapidement les ouvrages pertinents",
+            "acceptance": [
+              "La pagination affiche 20 résultats par page",
+              "Les filtres par catégorie fonctionnent",
+              "Le temps de réponse reste inférieur à 2 s"
+            ],
+            "tasks": [
+              {
+                "title": "Développer le composant de pagination",
+                "description": "Implémenter la logique de pages dans l'UI",
+                "sources": [
+                  6
+                ],
+                "type": "dev",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "navigation-du-catalogue-"
+                ],
+                "cle": "TF-11",
+                "chemin": "TF-3.1.1"
+              },
+              {
+                "title": "Implémenter les filtres par catégorie",
+                "description": "Ajouter les paramètres de filtre dans l'API et l'UI",
+                "sources": [
+                  6
+                ],
+                "type": "dev",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "navigation-du-catalogue-"
+                ],
+                "cle": "TF-12",
+                "chemin": "TF-3.1.2"
+              },
+              {
+                "title": "Optimiser les requêtes pour navigation fluide",
+                "description": "Indexer les colonnes de recherche fréquente",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "navigation-du-catalogue-"
+                ],
+                "cle": "TF-13",
+                "chemin": "TF-3.1.3"
+              },
+              {
+                "title": "Tester la navigation",
+                "description": "Vérifier la pagination et les filtres avec des jeux de données",
+                "sources": [
+                  6
+                ],
+                "type": "test",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "Le scénario de test de « Tester la navigation » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "navigation-du-catalogue-"
+                ],
+                "cle": "TF-14",
+                "chemin": "TF-3.1.4"
+              },
+              {
+                "title": "Rédiger le guide de navigation",
+                "description": "Explications d'utilisation des filtres et pagination",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "navigation-du-catalogue-"
+                ],
+                "cle": "TF-15",
+                "chemin": "TF-3.1.5"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Gestion des prêts et des retards",
+        "description": "Processus d'emprunt, retour, suivi des retards et notifications",
+        "stories": [
+          {
+            "cle": "TF-4.1",
+            "title": "Gestion des réservations et files d'attente",
+            "as_a": "étudiant",
+            "i_want": "réserver un livre indisponible et être notifié lorsqu'il redevient disponible",
+            "so_that": "ne pas perdre l'opportunité de le lire",
+            "acceptance": [
+              "La réservation crée une entrée en file d'attente FIFO",
+              "Le premier de la file est notifié dès la disponibilité",
+              "L'utilisateur peut annuler sa réservation"
+            ],
+            "tasks": [
+              {
+                "title": "Implémenter la logique de file d'attente",
+                "description": "Gestion d'une table WaitingList avec ordre d'arrivée",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "gestion-des-reservations"
+                ],
+                "cle": "TF-16",
+                "chemin": "TF-4.1.1"
+              },
+              {
+                "title": "Ajouter les notifications de disponibilité",
+                "description": "Envoyer un email ou push au premier de la file",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "gestion-des-reservations"
+                ],
+                "cle": "TF-17",
+                "chemin": "TF-4.1.2"
+              },
+              {
+                "title": "Créer les tests de file d'attente",
+                "description": "Vérifier l'ordre FIFO et les notifications",
+                "sources": [],
+                "type": "test",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le scénario de test de « Créer les tests de file d'attente » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "gestion-des-reservations"
+                ],
+                "cle": "TF-18",
+                "chemin": "TF-4.1.3"
+              },
+              {
+                "title": "Mettre à jour l'UI de réservation",
+                "description": "Afficher la position dans la file et le bouton d'annulation",
+                "sources": [],
+                "type": "design",
+                "priorite": "Basse",
+                "criteres": [
+                  "La maquette est validée par le demandeur",
+                  "Les états vide, erreur et chargement sont représentés"
+                ],
+                "labels": [
+                  "design",
+                  "gestion-des-reservations"
+                ],
+                "cle": "TF-19",
+                "chemin": "TF-4.1.4"
+              },
+              {
+                "title": "Documenter la politique de réservation",
+                "description": "Règles de durée, nombre maximal, etc.",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "gestion-des-reservations"
+                ],
+                "cle": "TF-20",
+                "chemin": "TF-4.1.5"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Partage et communauté",
+        "description": "Fonctionnalités d'invitation, de partage de collections et de gestion multi‑antenne",
+        "stories": [
+          {
+            "cle": "TF-5.1",
+            "title": "Gestion des collections multi‑antenne",
+            "as_a": "administrateur",
+            "i_want": "gérer des collections réparties sur plusieurs sites",
+            "so_that": "les usagers peuvent rechercher partout dans le réseau",
+            "acceptance": [
+              "Les antennes sont définies avec leurs propres étagères",
+              "La recherche inter‑antenne renvoie les résultats de toutes les antennes",
+              "Les données restent synchronisées entre les sites"
+            ],
+            "tasks": [
+              {
+                "title": "Modéliser les antennes dans la base",
+                "description": "Ajouter l'entité Antenna et la relation avec Book",
+                "sources": [
+                  7
+                ],
+                "type": "dev",
+                "priorite": "Haute",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "gestion-des-collections-"
+                ],
+                "cle": "TF-21",
+                "chemin": "TF-5.1.1"
+              },
+              {
+                "title": "Implémenter la recherche multi‑antenne",
+                "description": "Étendre le service de recherche pour filtrer par antenne ou tout inclure",
+                "sources": [
+                  7
+                ],
+                "type": "dev",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "gestion-des-collections-"
+                ],
+                "cle": "TF-22",
+                "chemin": "TF-5.1.2"
+              },
+              {
+                "title": "Créer l'interface de sélection d'antenne",
+                "description": "Dropdown permettant de choisir l'antenne cible",
+                "sources": [
+                  7
+                ],
+                "type": "design",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "La maquette est validée par le demandeur",
+                  "Les états vide, erreur et chargement sont représentés"
+                ],
+                "labels": [
+                  "design",
+                  "gestion-des-collections-"
+                ],
+                "cle": "TF-23",
+                "chemin": "TF-5.1.3"
+              },
+              {
+                "title": "Tester la cohérence des données entre antennes",
+                "description": "Vérifier que les ajouts dans une antenne sont visibles globalement",
+                "sources": [
+                  7
+                ],
+                "type": "test",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "Le scénario de test de « Tester la cohérence des données entre antennes » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "gestion-des-collections-"
+                ],
+                "cle": "TF-24",
+                "chemin": "TF-5.1.4"
+              },
+              {
+                "title": "Documenter la configuration multi‑antenne",
+                "description": "Guide d'installation et de gestion des sites",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "gestion-des-collections-"
+                ],
+                "cle": "TF-25",
+                "chemin": "TF-5.1.5"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Reporting et suivi",
+        "description": "Tableaux de bord, rapports d'usage et export de données",
+        "stories": [
+          {
+            "cle": "TF-6.1",
+            "title": "Export des données",
+            "as_a": "administrateur",
+            "i_want": "exporter l'intégralité des données au format JSON ou CSV",
+            "so_that": "les analyser hors ligne ou les archiver",
+            "acceptance": [
+              "L'export inclut les entités Users, Books, Loans, Reservations",
+              "Les formats JSON et CSV sont disponibles",
+              "Les données sensibles sont anonymisées conformément au RGPD"
+            ],
+            "tasks": [
+              {
+                "title": "Implémenter l'export des tables",
+                "description": "Endpoint GET /export qui génère les fichiers demandés",
+                "sources": [],
+                "type": "dev",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "export-des-donnees"
+                ],
+                "cle": "TF-26",
+                "chemin": "TF-6.1.1"
+              },
+              {
+                "title": "Ajouter les filtres de conformité RGPD",
+                "description": "Masquer ou chiffrer les champs personnels sensibles",
+                "sources": [
+                  13
+                ],
+                "type": "dev",
+                "priorite": "Moyenne",
+                "criteres": [
+                  "Le comportement décrit est implémenté",
+                  "Les données invalides sont rejetées avec un message clair",
+                  "La fonctionnalité est couverte par au moins un test"
+                ],
+                "labels": [
+                  "dev",
+                  "export-des-donnees"
+                ],
+                "cle": "TF-27",
+                "chemin": "TF-6.1.2"
+              },
+              {
+                "title": "Créer les tests d'export",
+                "description": "Vérifier le contenu et le format des fichiers générés",
+                "sources": [],
+                "type": "test",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le scénario de test de « Créer les tests d'export » passe",
+                  "Le cas d'erreur est couvert",
+                  "La non-régression des tâches liées est vérifiée"
+                ],
+                "labels": [
+                  "test",
+                  "export-des-donnees"
+                ],
+                "cle": "TF-28",
+                "chemin": "TF-6.1.3"
+              },
+              {
+                "title": "Documenter la procédure d'export",
+                "description": "Guide pas à pas pour lancer et récupérer les exports",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "export-des-donnees"
+                ],
+                "cle": "TF-29",
+                "chemin": "TF-6.1.4"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Qualité, sécurité et mise en production",
+        "description": "Tests, analyses de sécurité OWASP et documentation complète",
+        "stories": [
+          {
+            "cle": "TF-7.1",
+            "title": "Documentation utilisateur et technique",
+            "as_a": "utilisateur final et développeur",
+            "i_want": "disposer de guides complets d'utilisation et de référence technique",
+            "so_that": "pouvoir prendre en main l'application et la maintenir",
+            "acceptance": [
+              "Le manuel utilisateur décrit les principales fonctionnalités",
+              "La documentation Swagger expose toutes les API",
+              "Le guide d'installation détaille le déploiement en production"
+            ],
+            "tasks": [
+              {
+                "title": "Rédiger le manuel utilisateur",
+                "description": "Guide pas à pas pour les fonctions de prêt, recherche, etc.",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "documentation-utilisateu"
+                ],
+                "cle": "TF-30",
+                "chemin": "TF-7.1.1"
+              },
+              {
+                "title": "Générer la documentation Swagger de l'API",
+                "description": "Utiliser Swashbuckle pour produire la spec OpenAPI",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "documentation-utilisateu"
+                ],
+                "cle": "TF-31",
+                "chemin": "TF-7.1.2"
+              },
+              {
+                "title": "Créer le guide d'installation serveur",
+                "description": "Instructions pour Docker, base de données, variables d'environnement",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "documentation-utilisateu"
+                ],
+                "cle": "TF-32",
+                "chemin": "TF-7.1.3"
+              },
+              {
+                "title": "Mettre en place la FAQ",
+                "description": "Réponses aux questions fréquentes des usagers et admins",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "documentation-utilisateu"
+                ],
+                "cle": "TF-33",
+                "chemin": "TF-7.1.4"
+              },
+              {
+                "title": "Réviser et publier la documentation",
+                "description": "Processus de relecture, versionnage et mise à disposition en ligne",
+                "sources": [],
+                "type": "doc",
+                "priorite": "Basse",
+                "criteres": [
+                  "Le document est relu et publié",
+                  "Il couvre le cas nominal et un cas d'erreur"
+                ],
+                "labels": [
+                  "doc",
+                  "documentation-utilisateu"
+                ],
+                "cle": "TF-34",
+                "chemin": "TF-7.1.5"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "metadonnees": {
+    "brief": "Application de gestion de bibliothèque scolaire avec prêt de livres, retards et catalogue partagé.",
+    "date": "2026-11-24 19:57",
+    "complexite": {
+      "origine": "indisponible",
+      "raison": "service muet ou réponse incomplète"
+    },
+    "modele": "openai/gpt-oss-120b",
+    "langue": "fr",
+    "analyse": {
+      "objectif": "Gérer le prêt, le suivi des retards et le catalogue partagé d'une bibliothèque scolaire",
+      "intention": "gestion de bibliothèque scolaire",
+      "concepts": [
+        "prêt de livres",
+        "gestion des retards",
+        "catalogue partagé",
+        "suivi des emprunts",
+        "notifications",
+        "catalogue numérique",
+        "interconnexion"
+      ],
+      "domaine": "éducation scolaire",
+      "sujet": "bibliothèque scolaire",
+      "utilisateurs": [
+        "étudiants",
+        "enseignants",
+        "bibliothécaires",
+        "personnel administratif"
+      ],
+      "contraintes": [],
+      "fonctionnalites": [
+        "prêt de livres",
+        "gestion des retards",
+        "catalogue partagé"
+      ],
+      "requete_fr": "prêt de livres et catalogue partagé",
+      "requete_en": "book lending and shared catalog",
+      "mots_cles": [
+        "library management",
+        "book lending",
+        "overdue tracking",
+        "shared catalog",
+        "school library"
+      ]
+    },
+    "requete_fr": "prêt de livres et catalogue partagé",
+    "requete_en": "book lending and shared catalog",
+    "sources_collectees": {
+      "swh": {
+        "n": 0,
+        "erreur": "'ascii' codec can't encode character '\\xe8' in position 33: ",
+        "gardes": 0
+      },
+      "srs": {
+        "n": 1,
+        "gardes": 1
+      },
+      "ted": {
+        "n": 0,
+        "gardes": 0
+      },
+      "wikipedia": {
+        "n": 2,
+        "gardes": 0
+      },
+      "itunes": {
+        "n": 3,
+        "gardes": 3
+      },
+      "owasp": {
+        "n": 9,
+        "gardes": 9
+      },
+      "gitlab": {
+        "n": 3,
+        "gardes": 0
+      },
+      "github": {
+        "n": 1,
+        "gardes": 0
+      },
+      "apache": {
+        "n": 0,
+        "gardes": 0
+      }
+    },
+    "verdicts_projets": [
+      {
+        "titre": "Structure de référence d'un cahier des charges (IEEE SRS)",
+        "source": "srs",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A01:2021 – Contrôles d'accès défaillants",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A02:2021 – Défaillances cryptographiques",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A03:2021 – Injection",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A04:2021 – Conception non sécurisée",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A05:2021 – Mauvaise configuration de sécurité",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A06:2021 – Composants vulnérables et obsolètes",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A07:2021 – Identification et authentification de mauvaise qualité",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A08:2021 – Manque d'intégrité des données et du logiciel",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "A09:2021 – Carence des systèmes de contrôle et de journalisation",
+        "source": "owasp",
+        "score": 1.0,
+        "retenu": true,
+        "motif": "source de référence"
+      },
+      {
+        "titre": "Bibliothèque scolaire",
+        "source": "wikipedia_fr",
+        "score": 0.432,
+        "retenu": true,
+        "motif": ""
+      },
+      {
+        "titre": "myBibliotek",
+        "source": "itunes",
+        "score": 0.386,
+        "retenu": true,
+        "motif": ""
+      },
+      {
+        "titre": "Plumerie: Biblio Perso",
+        "source": "itunes",
+        "score": 0.369,
+        "retenu": true,
+        "motif": ""
+      },
+      {
+        "titre": "StreetBooks",
+        "source": "itunes",
+        "score": 0.364,
+        "retenu": true,
+        "motif": ""
+      },
+      {
+        "titre": "Prix Espiègle",
+        "source": "wikipedia_fr",
+        "score": 0.336,
+        "retenu": true,
+        "motif": ""
+      },
+      {
+        "titre": "manar_aljarkas/library-management-project",
+        "source": "gitlab_readme",
+        "score": 0.274,
+        "retenu": true,
+        "motif": "meilleur de sa source"
+      },
+      {
+        "titre": "AS-Systems/LibraryManager",
+        "source": "github_readme",
+        "score": 0.231,
+        "retenu": true,
+        "motif": "meilleur de sa source"
+      },
+      {
+        "titre": "biancagomes/api_nodejs",
+        "source": "gitlab_readme",
+        "score": 0.154,
+        "retenu": 0.0,
+        "motif": "sujet trop peu présent"
+      },
+      {
+        "titre": "haikelz/peminjaman-buku",
+        "source": "gitlab_readme",
+        "score": 0.149,
+        "retenu": 0.0,
+        "motif": "sujet trop peu présent"
+      }
+    ],
+    "categories_fonctionnalites": {
+      "général": 6,
+      "recherche": 2,
+      "communication": 2
+    },
+    "pipeline": {
+      "documents": 17,
+      "passages": 69,
+      "passages_retenus": 12,
+      "fonctionnalites": 10,
+      "fonctions_brutes": 13,
+      "fonctions_doublons": 0,
+      "fonctions_hors_sujet": 3,
+      "exigences": 8,
+      "extraits": 8,
+      "documents_dans_top": 10,
+      "bm25_top": "Plumerie: Biblio Perso",
+      "vector_top": "Bibliothèque scolaire"
+    },
+    "qualite": {
+      "epics": 7,
+      "stories": 7,
+      "taches": 34,
+      "sourcees": 13,
+      "taux_ancrage": 0.38,
+      "doublons": 0,
+      "diversite": 8,
+      "couverture": 1.0,
+      "types": {
+        "config": 4,
+        "design": 2,
+        "dev": 9,
+        "doc": 11,
+        "securite": 4,
+        "test": 4
+      },
+      "taches_par_story": 4.86
+    },
+    "duree_s": 103.3,
+    "avertissements": [
+      "7 épic(s) à story unique : ['Socle technique', 'Gestion des utilisateurs et des accès', 'Gestion du catalogue et des ouvrages']"
+    ],
+    "motif_rejet": "",
+    "non_ancre": false
+  },
+  "preuves": [
+    {
+      "id": 1,
+      "type": "fonctionnalite",
+      "texte": "Book and journal registration with physical location tracking",
+      "document": "AS-Systems/LibraryManager",
+      "source": "github_readme",
+      "url": "https://github.com/AS-Systems/LibraryManager"
+    },
+    {
+      "id": 2,
+      "type": "fonctionnalite",
+      "texte": "User-to-user lending with borrow/return registration",
+      "document": "AS-Systems/LibraryManager",
+      "source": "github_readme",
+      "url": "https://github.com/AS-Systems/LibraryManager"
+    },
+    {
+      "id": 3,
+      "type": "fonctionnalite",
+      "texte": "Global collection search and reservation system across the user community",
+      "document": "AS-Systems/LibraryManager",
+      "source": "github_readme",
+      "url": "https://github.com/AS-Systems/LibraryManager"
+    },
+    {
+      "id": 4,
+      "type": "fonctionnalite",
+      "texte": "(Create, Read, Update, Delete) on the database entities using Entity Framework Core",
+      "document": "AS-Systems/LibraryManager",
+      "source": "github_readme",
+      "url": "https://github.com/AS-Systems/LibraryManager"
+    },
+    {
+      "id": 5,
+      "type": "fonctionnalite",
+      "texte": "Add books and assign them to shelves",
+      "document": "AS-Systems/LibraryManager",
+      "source": "github_readme",
+      "url": "https://github.com/AS-Systems/LibraryManager"
+    },
+    {
+      "id": 6,
+      "type": "fonctionnalite",
+      "texte": "Browse their collection or search the global catalog",
+      "document": "AS-Systems/LibraryManager",
+      "source": "github_readme",
+      "url": "https://github.com/AS-Systems/LibraryManager"
+    },
+    {
+      "id": 7,
+      "type": "fonctionnalite",
+      "texte": "de gérer de plus grandes collections réparties sur plusieurs antennes, tout en gardant tout organisé au sein d'un même système",
+      "document": "StreetBooks",
+      "source": "itunes",
+      "url": "https://apps.apple.com/fr/app/streetbooks/id6751029906?uo=4"
+    },
+    {
+      "id": 8,
+      "type": "fonctionnalite",
+      "texte": "les membres et les prêts",
+      "document": "StreetBooks",
+      "source": "itunes",
+      "url": "https://apps.apple.com/fr/app/streetbooks/id6751029906?uo=4"
+    },
+    {
+      "id": 9,
+      "type": "fonctionnalite",
+      "texte": "de gérer et partager vos livres simplement avec votre entourage",
+      "document": "myBibliotek",
+      "source": "itunes",
+      "url": "https://apps.apple.com/fr/app/mybibliotek/id6760732490?uo=4"
+    },
+    {
+      "id": 10,
+      "type": "fonctionnalite",
+      "texte": "Invitez famille, amis ou collègues à rejoindre votre bibliothèque. Gérez les prêts, suivez qui a quoi, recevez des rappels",
+      "document": "myBibliotek",
+      "source": "itunes",
+      "url": "https://apps.apple.com/fr/app/mybibliotek/id6760732490?uo=4"
+    },
+    {
+      "id": 11,
+      "type": "exigence",
+      "texte": "Contrôles d'accès défaillants",
+      "document": "A01:2021 – Contrôles d'accès défaillants",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A01_2021/"
+    },
+    {
+      "id": 12,
+      "type": "exigence",
+      "texte": "Violation du principe du moindre privilège ou de refus par défaut, où l'accès ne doit être accordé que pour des capacités, des rôles ou des utilisateurs particu",
+      "document": "A01:2021 – Contrôles d'accès défaillants",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A01_2021/"
+    },
+    {
+      "id": 13,
+      "type": "exigence",
+      "texte": "Défaillances cryptographiques",
+      "document": "A02:2021 – Défaillances cryptographiques",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A02_2021/"
+    },
+    {
+      "id": 14,
+      "type": "exigence",
+      "texte": "des données hostiles sont utilisées directement ou concaténées, par exemple lors de la construction de requêtes dynamiques, de commandes ou de procédures stocké",
+      "document": "A03:2021 – Injection",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A03_2021/"
+    },
+    {
+      "id": 15,
+      "type": "exigence",
+      "texte": "Conception non sécurisée",
+      "document": "A04:2021 – Conception non sécurisée",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A04_2021/"
+    },
+    {
+      "id": 16,
+      "type": "exigence",
+      "texte": "Mauvaise configuration de sécurité",
+      "document": "A05:2021 – Mauvaise configuration de sécurité",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A05_2021/"
+    },
+    {
+      "id": 17,
+      "type": "exigence",
+      "texte": "le traitement des erreurs révèle aux utilisateurs des traces des piles protocolaires ou d'autres messages d'erreur laissant transpirer trop d'informations",
+      "document": "A05:2021 – Mauvaise configuration de sécurité",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A05_2021/"
+    },
+    {
+      "id": 18,
+      "type": "exigence",
+      "texte": "Composants vulnérables et obsolètes",
+      "document": "A06:2021 – Composants vulnérables et obsolètes",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A06_2021/"
+    },
+    {
+      "id": 19,
+      "type": "extrait",
+      "texte": "Vos livres méritent mieux qu'une feuille de calcul. Plumerie est une application de bibliothèque personnelle pour les lecteurs qui possèdent des livres physiques. Cataloguez votre collection, partagez avec votre famille, et prêtez à vos amis — sans publicité, sans liens affiliés,",
+      "document": "Plumerie: Biblio Perso",
+      "source": "itunes",
+      "url": "https://apps.apple.com/fr/app/plumerie-biblio-perso/id6773690082?uo=4"
+    },
+    {
+      "id": 20,
+      "type": "extrait",
+      "texte": "LibraryManager ## About **LibraryManager* - is a desktop application that helps users manage their personal book collections and share them with a community. It allows users to register books and journals, track their physical locations on bookshelves, and manage borrowing and le",
+      "document": "AS-Systems/LibraryManager",
+      "source": "github_readme",
+      "url": "https://github.com/AS-Systems/LibraryManager"
+    },
+    {
+      "id": 21,
+      "type": "extrait",
+      "texte": "Library-Management-Project ## Getting started To make it easy for you to get started with GitLab, here's a list of recommended next steps. Already a pro? Just edit this README.md and make it your own. Want to make it easy? Use the template at the bottom! ## Add your files - [ ] C",
+      "document": "manar_aljarkas/library-management-project",
+      "source": "gitlab_readme",
+      "url": "https://gitlab.com/manar_aljarkas/library-management-project"
+    },
+    {
+      "id": 22,
+      "type": "extrait",
+      "texte": "La bibliothèque scolaire désigne toute bibliothèque que l'on peut trouver dans un établissement d'enseignement pour les jeunes. Le terme de bibliothèque scolaire est utilisé directement au Québec, en France sa forme la plus commune est le centre de documentation et d'information ",
+      "document": "Bibliothèque scolaire",
+      "source": "wikipedia_fr",
+      "url": "https://fr.wikipedia.org/wiki/Bibliothèque_scolaire"
+    },
+    {
+      "id": 23,
+      "type": "extrait",
+      "texte": "Mais Streetbooks peut faire bien plus encore. Créez votre propre bibliothèque et décidez vous-même comment l'utiliser. Gardez-la privée pour votre gestion personnelle, partagez des livres avec vos amis et vos membres, ou transformez votre collection en bibliothèque communautaire ",
+      "document": "StreetBooks",
+      "source": "itunes",
+      "url": "https://apps.apple.com/fr/app/streetbooks/id6751029906?uo=4"
+    },
+    {
+      "id": 24,
+      "type": "extrait",
+      "texte": "Votre bibliothèque partagée, enfin numérique. myBibliotek vous permet de gérer et partager vos livres simplement avec votre entourage. SCANNER & CATALOGUER Scannez un code-barres ISBN, les informations du livre arrivent automatiquement : titre, auteur, couverture, description. Aj",
+      "document": "myBibliotek",
+      "source": "itunes",
+      "url": "https://apps.apple.com/fr/app/mybibliotek/id6760732490?uo=4"
+    },
+    {
+      "id": 25,
+      "type": "extrait",
+      "texte": "soit par défaut, soit dans le code source existant ? - Est-ce que des clefs de chiffrement par défaut sont utilisées ? Des clefs de chiffrement faibles sont-elles générées ou réutilisées ? Leur gestion et rotation sont-elles prises en charge ? Est-ce que des clés sont présentes d",
+      "document": "A02:2021 – Défaillances cryptographiques",
+      "source": "owasp",
+      "url": "https://owasp.org/Top10/A02_2021/"
+    },
+    {
+      "id": 26,
+      "type": "extrait",
+      "texte": "Sections attendues : Software Requirements Specification | For {{project name}} | Table of Contents | Revision History | 1. Introduction | 1.1 Document Purpose | 1.2 Product Scope | 1.3 Definitions, Acronyms, and Abbreviations | 1.4 References | 1.5 Document Overview | 2. Product",
+      "document": "Structure de référence d'un cahier des charges (IEEE SRS)",
+      "source": "srs",
+      "url": "https://raw.githubusercontent.com/jam01/SRS-Template/master/srs-template-bare.md"
+    }
+  ],
+  "passages": [
+    {
+      "document": "Plumerie: Biblio Perso",
+      "source": "itunes",
+      "scores": {
+        "hybride": 0.0325,
+        "couverture": 0.174,
+        "source": 0.95,
+        "penalite_repetition": 0.0,
+        "final": 0.3696
+      },
+      "texte": "Vos livres méritent mieux qu'une feuille de calcul. Plumerie est une application de bibliothèque personnelle pour les lecteurs qui possèdent des livres physiques. Cataloguez votre collection, partagez avec votre famille, et prêtez à vos amis — sans publicité, sans liens affiliés, sans Amazon. CE QUI LA DISTINGUE Un partage familial qui fonctionne vraiment. Une bibliothèque partagée où chacun peut "
+    },
+    {
+      "document": "AS-Systems/LibraryManager",
+      "source": "github_readme",
+      "scores": {
+        "hybride": 0.0308,
+        "couverture": 0.13,
+        "source": 1.0,
+        "penalite_repetition": 0.0,
+        "final": 0.361
+      },
+      "texte": "# LibraryManager ## About **LibraryManager* - is a desktop application that helps users manage their personal book collections and share them with a community. It allows users to register books and journals, track their physical locations on bookshelves, and manage borrowing and lending activities with other users in the system. Key features of the application include: - Book and journal registrat"
+    },
+    {
+      "document": "manar_aljarkas/library-management-project",
+      "source": "gitlab_readme",
+      "scores": {
+        "hybride": 0.0258,
+        "couverture": 0.087,
+        "source": 1.0,
+        "penalite_repetition": 0.0,
+        "final": 0.3433
+      },
+      "texte": "# Library-Management-Project ## Getting started To make it easy for you to get started with GitLab, here's a list of recommended next steps. Already a pro? Just edit this README.md and make it your own. Want to make it easy? Use the template at the bottom! ## Add your files - [ ] Create or upload files - [ ] Add files using the command line or push an existing Git repository with the following com"
+    },
+    {
+      "document": "Bibliothèque scolaire",
+      "source": "wikipedia_fr",
+      "scores": {
+        "hybride": 0.0325,
+        "couverture": 0.087,
+        "source": 0.8,
+        "penalite_repetition": 0.0,
+        "final": 0.3167
+      },
+      "texte": "La bibliothèque scolaire désigne toute bibliothèque que l'on peut trouver dans un établissement d'enseignement pour les jeunes. Le terme de bibliothèque scolaire est utilisé directement au Québec, en France sa forme la plus commune est le centre de documentation et d'information (CDI), dans les établissements d'enseignement secondaire."
+    },
+    {
+      "document": "StreetBooks",
+      "source": "itunes",
+      "scores": {
+        "hybride": 0.0317,
+        "couverture": 0.174,
+        "source": 0.95,
+        "penalite_repetition": 0.08,
+        "final": 0.2892
+      },
+      "texte": ". Mais Streetbooks peut faire bien plus encore. Créez votre propre bibliothèque et décidez vous-même comment l'utiliser. Gardez-la privée pour votre gestion personnelle, partagez des livres avec vos amis et vos membres, ou transformez votre collection en bibliothèque communautaire où les lecteurs peuvent découvrir des livres disponibles près de chez eux. Pour les clubs, associations et autres orga"
+    },
+    {
+      "document": "myBibliotek",
+      "source": "itunes",
+      "scores": {
+        "hybride": 0.0303,
+        "couverture": 0.174,
+        "source": 0.95,
+        "penalite_repetition": 0.16,
+        "final": 0.2085
+      },
+      "texte": "Votre bibliothèque partagée, enfin numérique. myBibliotek vous permet de gérer et partager vos livres simplement avec votre entourage. SCANNER & CATALOGUER Scannez un code-barres ISBN, les informations du livre arrivent automatiquement : titre, auteur, couverture, description. Ajoutez vos propres champs personnalisés. PARTAGER AVEC VOS PROCHES Invitez famille, amis ou collègues à rejoindre votre b"
+    },
+    {
+      "document": "A02:2021 – Défaillances cryptographiques",
+      "source": "owasp",
+      "scores": {
+        "hybride": 0.0276,
+        "couverture": 0.043,
+        "source": 0.85,
+        "penalite_repetition": 0.0,
+        "final": 0.1565
+      },
+      "texte": ", soit par défaut, soit dans le code source existant ? - Est-ce que des clefs de chiffrement par défaut sont utilisées ? Des clefs de chiffrement faibles sont-elles générées ou réutilisées ? Leur gestion et rotation sont-elles prises en charge ? Est-ce que des clés sont présentes dans l'outil de versionnement de code source ? - Les réponses transmises au navigateur"
+    },
+    {
+      "document": "Structure de référence d'un cahier des charges (IEEE SRS)",
+      "source": "srs",
+      "scores": {
+        "hybride": 0.0238,
+        "couverture": 0.0,
+        "source": 0.9,
+        "penalite_repetition": 0.0,
+        "final": 0.1469
+      },
+      "texte": "Sections attendues : Software Requirements Specification | For {{project name}} | Table of Contents | Revision History | 1. Introduction | 1.1 Document Purpose | 1.2 Product Scope | 1.3 Definitions, Acronyms, and Abbreviations | 1.4 References | 1.5 Document Overview | 2. Product Overview | 2.1 Product Perspective | 2.2 Product Functions | 2.3 Product Constraints | 2.4 User Characteristics | 2.5 A"
+    },
+    {
+      "document": "A06:2021 – Composants vulnérables et obsolètes",
+      "source": "owasp",
+      "scores": {
+        "hybride": 0.0269,
+        "couverture": 0.043,
+        "source": 0.85,
+        "penalite_repetition": 0.08,
+        "final": 0.0761
+      },
+      "texte": "rable : - si vous ne savez pas quels sont tous les composants que vous utilisez (à la fois côté client et côté serveur). Cela comprend les composants que vous utilisez directement ou par l'intermédiaire des dépendances imbriquées ; - si le logiciel est vulnérable, sans support ou obsolète. Cela concerne le système d'exploitation, le serveur web/application, le système de gestion de base de données"
+    },
+    {
+      "document": "Prix Espiègle",
+      "source": "wikipedia_fr",
+      "scores": {
+        "hybride": 0.029,
+        "couverture": 0.043,
+        "source": 0.8,
+        "penalite_repetition": 0.08,
+        "final": 0.0697
+      },
+      "texte": "Le prix Espiègle est un prix littéraire québécois annuel pour la jeunesse. Il est créé en 2017 par l'Association pour la promotion des services documentaires scolaires (APSDS) et couronne des livres audacieux et d’une grande qualité littéraire. Il récompense des livres dont le sujet dérange ou déclenche une polémique, il peut aussi s'agir de livres censurés à cause de la nature de leur sujet."
+    },
+    {
+      "document": "AS-Systems/LibraryManager",
+      "source": "github_readme",
+      "scores": {
+        "hybride": 0.0274,
+        "couverture": 0.043,
+        "source": 1.0,
+        "penalite_repetition": 0.33,
+        "final": -0.0011
+      },
+      "texte": "and assign them to shelves. - Browse their collection or search the global catalog. - Reserve, borrow, and return books. - Use Clippy (F1) for help throughout the app."
+    },
+    {
+      "document": "manar_aljarkas/library-management-project",
+      "source": "gitlab_readme",
+      "scores": {
+        "hybride": 0.0242,
+        "couverture": 0.043,
+        "source": 1.0,
+        "penalite_repetition": 0.33,
+        "final": -0.0027
+      },
+      "texte": "integrations ## Collaborate with your team - [ ] Invite team members and collaborators - [ ] Create a new merge request - [ ] Automatically close issues from merge requests - [ ] Enable merge request approvals - [ ] Set auto-merge ## Test and Deploy Use the built-in continuous integration in GitLab. - [ ] Get started with GitLab CI/CD - [ ] Analyze your code for known vulnerabilities with Static A"
+    }
+  ]
+}
