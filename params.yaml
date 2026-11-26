@@ -1,0 +1,8 @@
+{
+  "model": {
+    "bundle": "service_modele/modele/model_bundle.joblib",
+    "config": "service_modele/modele/config.json",
+    "embeddings": "service_modele/modele/embedding_model",
+    "expected_classes": 4
+  }
+}

@@ -1,0 +1,13 @@
+stages:
+  validate_model:
+    cmd: python3 scripts/dvc/validate_model.py
+    deps:
+      - scripts/dvc/validate_model.py
+      - service_modele/modele/model_bundle.joblib
+      - service_modele/modele/config.json
+      - service_modele/modele/embedding_model
+    params:
+      - model
+    metrics:
+      - reports/dvc/model_metrics.json:
+          cache: false

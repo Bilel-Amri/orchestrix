@@ -1,0 +1,36 @@
+{
+  "model": {
+    "bundle": "service_modele/modele/model_bundle.joblib",
+    "bundle_sha256": "1d936f2e4777344088ed59e7185970f3a67918f3f87511083f0987526e9e34c6",
+    "config": "service_modele/modele/config.json",
+    "embedding_files_count": 9,
+    "embedding_sha256": {
+      "service_modele/modele/embedding_model/1_Pooling/config.json": "8759bdf7c77efc7df7723f64856a593c8943b71ee38baf2a88771fbaf78438f9",
+      "service_modele/modele/embedding_model/README.md": "89a1a9c3290fe58e76c939b578c48a14331dc7bfcaaf5a53102adb183da6f96a",
+      "service_modele/modele/embedding_model/config.json": "c08b0046a5f44b2ea766ac3cdef10e2a8663704c3bcb9a2f17bf44f00c3a11ed",
+      "service_modele/modele/embedding_model/config_sentence_transformers.json": "a242b9debd625b29b80b2bec22bc14d95f535a6b4b39913ff86da4f22874fa93",
+      "service_modele/modele/embedding_model/model.safetensors": "0b3c8c717335c801abb15983036a6f1df4b6943fd6b93717969efd96d22eeec6",
+      "service_modele/modele/embedding_model/modules.json": "fa7d796a215e1b2416773062891923b191fc5a4849bc44e322997433c90f459c",
+      "service_modele/modele/embedding_model/sentence_bert_config.json": "3084164002c0bca01b0259c5327123803fce32e660a57feb93184ffead186fc8",
+      "service_modele/modele/embedding_model/tokenizer.json": "0ee64512c4fd9554e98781bbe75e2b5c6a08dfbd32a970e8da4d4c5aae059fec",
+      "service_modele/modele/embedding_model/tokenizer_config.json": "c48a605173b8a1d444d3ea2bf82fa823e38057693b8f0c2b26fd86656f1d98f7"
+    }
+  },
+  "classes": {
+    "0": "Faible",
+    "1": "Moyenne",
+    "2": "Elevee",
+    "3": "Tres_elevee"
+  },
+  "versions": {
+    "python": "3.13.16",
+    "scikit_learn": "1.6.1",
+    "joblib": "1.6.0"
+  },
+  "test_metrics": {
+    "accuracy": 0.5583244152270295,
+    "macro_f1": 0.4450155177621695,
+    "balanced_accuracy": 0.44799674247937016,
+    "baseline_always_faible_accuracy": 0.5142944503898487
+  }
+}
