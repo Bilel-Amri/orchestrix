@@ -1,0 +1,5 @@
+outs:
+- md5: f741205c108448f48350bb5dd8eb00a7
+  size: 110301150
+  hash: md5
+  path: model_bundle.joblib
